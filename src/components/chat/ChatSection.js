@@ -195,19 +195,23 @@ const ChatSection = () => {
         </Sidebar>
         <MainContent>
           <MessageList ref={messageListRef}>
-            {messages.map((msg, index) => (
-              <MessageBubble 
-                key={index} 
-                $isUser={msg.role === 'user'}
-                $isSystem={msg.role === 'system'}
-              >
-                <MessageContent components={renderers}>{msg.content}</MessageContent>
-                <CopyIcon 
-                  onClick={() => copyMessageToClipboard(msg.content)}
-                  $isUser={msg.role === 'user'}
-                />
-              </MessageBubble>
-            ))}
+            {messages.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>No messages yet</div>
+            ) : (
+              messages.map((msg, index) => (
+                <MessageBubble 
+                  key={index} 
+                  $isUser={msg.sender === 'requester'}
+                  $isSystem={msg.sender !== 'requester' && msg.sender !== 'provider'}
+                >
+                  <MessageContent components={renderers}>{msg.message}</MessageContent>
+                  <CopyIcon 
+                    onClick={() => copyMessageToClipboard(msg.message)}
+                    $isUser={msg.sender === 'requester'}
+                  />
+                </MessageBubble>
+              ))
+            )}
             {isTyping && (
               <MessageBubble $isSystem>
                 Writing...

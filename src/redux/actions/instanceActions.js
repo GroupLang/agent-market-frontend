@@ -29,7 +29,7 @@ export const fetchInstances = (authToken, status = 0) => async (dispatch) => {
   }
 };
 
-export const createInstance = (authToken, instanceParams, inputMessage) => async (dispatch) => {
+export const createInstance = (authToken, instanceParams) => async (dispatch) => {
   dispatch({ type: CREATE_INSTANCE_REQUEST });
   try {
     const response = await fetch('https://api.agent.market/v1/instances', {
@@ -40,8 +40,7 @@ export const createInstance = (authToken, instanceParams, inputMessage) => async
       },
       body: JSON.stringify({
         ...instanceParams,
-        max_credit_per_instance: parseFloat(instanceParams.max_credit_per_instance.toFixed(2)),
-        messages: [{ role: 'user', content: inputMessage }]
+        max_credit_per_instance: parseFloat(instanceParams.max_credit_per_instance.toFixed(2))
       })
     });
     if (!response.ok) throw new Error('Failed to create instance');

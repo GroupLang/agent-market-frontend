@@ -11,8 +11,7 @@ export const SET_ACTIVE_CONVERSATION = 'SET_ACTIVE_CONVERSATION';
 export const SUBMIT_REWARD_REQUEST = 'SUBMIT_REWARD_REQUEST';
 export const SUBMIT_REWARD_SUCCESS = 'SUBMIT_REWARD_SUCCESS';
 export const SUBMIT_REWARD_FAILURE = 'SUBMIT_REWARD_FAILURE';
-export const ADD_USER_MESSAGE = 'ADD_USER_MESSAGE';
-export const ADD_ASSISTANT_MESSAGE = 'ADD_ASSISTANT_MESSAGE';
+export const ADD_MESSAGE = 'ADD_MESSAGE';
 
 export const fetchConversations = (authToken) => async (dispatch) => {
   dispatch({ type: FETCH_CONVERSATIONS_REQUEST });
@@ -38,67 +37,57 @@ export const fetchConversations = (authToken) => async (dispatch) => {
 export const fetchMessages = (authToken, conversationId) => async (dispatch) => {
   dispatch({ type: FETCH_MESSAGES_REQUEST });
   try {
-    const response = await fetch(`https://api.agent.market/v1/chat/completions/${conversationId}`, {
+    const response = await fetch(`https://api.agent.market/v1/chat/${conversationId}`, {
       headers: { 'Authorization': `Bearer ${authToken}` }
     });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const messages = await response.json();
     
-    let allMessages = [];
-    if (Array.isArray(data)) {
-      data.forEach(item => {
-        if (item.user_message && item.user_message.length > 0) {
-          const lastUserMessage = item.user_message[item.user_message.length - 1];
-          allMessages.push({ role: 'user', content: lastUserMessage.content });
-        }
-        if (item.response && item.response.choices && item.response.choices.length > 0) {
-          const lastResponse = item.response.choices[item.response.choices.length - 1].message;
-          allMessages.push({ role: lastResponse.role, content: lastResponse.content });
-        }
-      });
-    }
-    dispatch({ type: FETCH_MESSAGES_SUCCESS, payload: allMessages });
+    // Directly use the messages array returned by the API
+    dispatch({ type: FETCH_MESSAGES_SUCCESS, payload: messages });
   } catch (error) {
     dispatch({ type: FETCH_MESSAGES_FAILURE, payload: error.message });
   }
 };
 
-export const sendMessage = (authToken, conversationId, message) => async (dispatch, getState) => {
+export const sendMessage = (authToken, conversationId, message) => async (dispatch) => {
   dispatch({ type: SEND_MESSAGE_REQUEST });
-  dispatch(addUserMessage({ role: 'user', content: message }));
+  dispatch(addMessage({ 
+    sender: 'requester', 
+    message: message, 
+    timestamp: new Date().toISOString() 
+  }));
 
   try {
-    const { messages } = getState().chat;
-    const lastMessages = messages.slice(-10);
-
-    const response = await fetch(`https://api.agent.market/v1/chat/completions/${conversationId}`, {
+    const response = await fetch(`https://api.agent.market/v1/chat/send-message/${conversationId}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        messages: lastMessages,
-        model: 'gpt-3.5-turbo'
+        message: message,
       }),
     });
 
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
 
-    if (data.response && data.response.choices && data.response.choices.length > 0) {
-      const assistantMessage = data.response.choices[0].message;
-      dispatch(addAssistantMessage(assistantMessage));
+    if (data.status === 'ok') {
+      dispatch({ type: SEND_MESSAGE_SUCCESS });
+      // Fetch the updated conversation to get the provider's response
+      dispatch(fetchMessages(authToken, conversationId));
     } else {
-      console.error('Unexpected API response structure:', data);
-      throw new Error('Unexpected response structure from the API');
+      throw new Error('Unexpected response from the API');
     }
-
-    dispatch({ type: SEND_MESSAGE_SUCCESS });
   } catch (error) {
     console.error('Error sending message:', error);
     dispatch({ type: SEND_MESSAGE_FAILURE, payload: error.message });
-    dispatch(addAssistantMessage({ role: 'system', content: 'Sorry, there was an error processing your request.' }));
+    dispatch(addMessage({ 
+      sender: 'system', 
+      message: 'Sorry, there was an error processing your request.',
+      timestamp: new Date().toISOString()
+    }));
   }
 };
 
@@ -128,12 +117,7 @@ export const submitReward = (authToken, conversationId, rewardValue) => async (d
   }
 };
 
-export const addUserMessage = (message) => ({
-  type: ADD_USER_MESSAGE,
-  payload: message
-});
-
-export const addAssistantMessage = (message) => ({
-  type: ADD_ASSISTANT_MESSAGE,
+export const addMessage = (message) => ({
+  type: ADD_MESSAGE,
   payload: message
 });

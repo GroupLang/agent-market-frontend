@@ -12,8 +12,7 @@ import {
   SUBMIT_REWARD_REQUEST,
   SUBMIT_REWARD_SUCCESS,
   SUBMIT_REWARD_FAILURE,
-  ADD_USER_MESSAGE,
-  ADD_ASSISTANT_MESSAGE
+  ADD_MESSAGE
 } from '../actions/chatActions';
 
 const initialState = {
@@ -22,7 +21,6 @@ const initialState = {
   activeConversation: null,
   loading: false,
   error: null,
-  isTyping: false
 };
 
 const chatReducer = (state = initialState, action) => {
@@ -41,18 +39,13 @@ const chatReducer = (state = initialState, action) => {
         ...state, 
         loading: false,
       };
-    case ADD_USER_MESSAGE:
+    case ADD_MESSAGE:
       return {
         ...state,
         messages: [...state.messages, action.payload],
-        isTyping: true
       };
-    case ADD_ASSISTANT_MESSAGE:
-      return {
-        ...state,
-        messages: [...state.messages, action.payload],
-        isTyping: false
-      };
+    case SET_ACTIVE_CONVERSATION:
+      return { ...state, activeConversation: action.payload };
     case SUBMIT_REWARD_SUCCESS:
       return {
         ...state,
@@ -66,8 +59,6 @@ const chatReducer = (state = initialState, action) => {
     case SEND_MESSAGE_FAILURE:
     case SUBMIT_REWARD_FAILURE:
       return { ...state, loading: false, error: action.payload };
-    case SET_ACTIVE_CONVERSATION:
-      return { ...state, activeConversation: action.payload };
     default:
       return state;
   }

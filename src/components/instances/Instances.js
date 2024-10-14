@@ -50,7 +50,6 @@ const Instances = () => {
     percentage_reward: 1,
     prompt_template: '',
   });
-  const [inputMessage, setInputMessage] = useState('');
 
   useEffect(() => {
     dispatch(fetchInstances(authToken));
@@ -58,7 +57,7 @@ const Instances = () => {
 
   const handleCreateInstance = (e) => {
     e.preventDefault();
-    dispatch(createInstance(authToken, instanceParams, inputMessage));
+    dispatch(createInstance(authToken, instanceParams));
   };
 
   const handleParamChange = (e) => {
@@ -306,17 +305,6 @@ const Instances = () => {
           value={instanceParams.background}
           onChange={handleParamChange}
           placeholder="Enter background..."
-          required
-        />
-      </FullWidthInputGroup>
-      <FullWidthInputGroup>
-        <Label htmlFor="first_message">First Message</Label>
-        <Input
-          id="first_message"
-          type="text"
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          placeholder="Enter your first message..."
           required
         />
       </FullWidthInputGroup>
