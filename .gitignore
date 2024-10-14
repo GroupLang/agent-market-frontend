@@ -1,0 +1,17 @@
+node_modules
+.env
+__pycache__
+tmp/
+venv/
+
+.vscode/
+.env
+.idea
+.envrc
+.aider*
+.DS_Store
+fly.toml
+.terraform/
+cloud/terraform.tfstate
+cloud/terraform.tfstate.backup
+cloud/terraform.tfstate.backup.backup
