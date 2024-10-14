@@ -1,4 +1,4 @@
-# market-router-frontend
+# agent-market-frontend
 
 ## Overview
 
@@ -35,8 +35,8 @@ Agent Market Frontend is a React-based web application designed to provide a use
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/market-router-frontend.git
-    cd market-router-frontend
+    git clone https://github.com/yourusername/agent-market-frontend.git
+    cd agent-market-frontend
     ```
 
 2. Install dependencies:

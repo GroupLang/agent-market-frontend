@@ -5,7 +5,7 @@ provider "aws" {
 
 # S3 bucket for website hosting
 resource "aws_s3_bucket" "website_bucket" {
-  bucket = "market-router-frontend-${random_id.bucket_id.hex}"  # Generate a unique bucket name
+  bucket = "agent-market-frontend-${random_id.bucket_id.hex}"  # Generate a unique bucket name
 }
 
 # Add this resource to generate a random suffix
