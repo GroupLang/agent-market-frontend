@@ -15,7 +15,7 @@ const App = () => {
         <Route path="/login" component={LoginForm} />
         <PrivateRoute path="/dashboard" component={Dashboard} />
         <Route exact path="/">
-          <Redirect to="/register" />
+          <Redirect to="/login" />
         </Route>
       </Switch>
       <ToastContainer />
