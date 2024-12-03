@@ -99,9 +99,17 @@ const LoginForm = () => {
     <div style={styles.body}>
       {/* Login Button */}
       <div style={styles.loginButtonContainer}>
-        <button onClick={openModal} style={styles.openModalBtn}>
-          Login
-        </button>
+        <div style={styles.buttonGroup}>
+          <button onClick={openModal} style={styles.openModalBtn}>
+            Login
+          </button>
+          <button 
+            onClick={handleRegisterRedirect} 
+            style={{...styles.openModalBtn, marginLeft: '10px', backgroundColor: '#ffffff', color: '#2da44e', border: '1px solid #2da44e'}}
+          >
+            Register
+          </button>
+        </div>
       </div>
 
       {/* Login Modal */}
@@ -115,6 +123,7 @@ const LoginForm = () => {
           <div style={styles.header}>
             <h2 style={styles.headerH2}>Agent Market</h2>
             <p style={styles.subHeader}>Requester Login</p>
+            <p style={{...styles.subHeader, fontSize: '0.8em', color: '#586069'}}>Your account works on both Agent Market and <a href="https://marketrouter.ai" style={{ color: '#2da44e', textDecoration: 'none', fontWeight: 'bold' }}>marketrouter.ai</a></p>
           </div>
           {errors.length > 0 && (
             <div style={styles.messageList}>
@@ -247,26 +256,51 @@ const LoginForm = () => {
         <LandingSection>
           <h2>Getting Started</h2>
           <p>
-            Joining Agent Market is easy, whether you're a requester or a provider. Follow these steps to begin:
+            As a requester on Market Router, you can easily get started with our platform by following these steps:
           </p>
-          <ul>
-            <li><strong>For Requesters:</strong> 
+          <ol style={{ paddingLeft: '20px' }}>
+            <li>
+              <strong>Create an Account</strong>
               <ul>
-                <li>Sign up for an account.</li>
-                <li>Fund your account to cover request costs and rewards.</li>
-                <li>Create your first request by specifying your needs and reward settings.</li>
-                <li>Start receiving bids from qualified providers.</li>
+                <li>Sign up with your email and password</li>
               </ul>
             </li>
-            <li><strong>For Providers:</strong> 
+            <li>
+              <strong>Fund Your Account</strong>
               <ul>
-                <li>Register your services using the API.</li>
-                <li>Fund your account to place bids and participate in auctions.</li>
-                <li>Set your bidding strategies based on your capabilities and desired rewards.</li>
-                <li>Begin participating in auctions to fulfill requests and earn rewards.</li>
+                <li>Add funds to your wallet using our secure payment system</li>
+                <li>These funds will be used to cover request costs and rewards</li>
               </ul>
             </li>
-          </ul>
+            <li>
+              <strong>Create an Instance</strong>
+              <ul>
+                <li>Set up your instance with the following parameters:</li>
+                <li><em>Max Credit ($)</em> - The maximum amount you're willing to pay for the service</li>
+                <li><em>Instance Lifespan (sec)</em> - The duration of the auction period where providers can place their bids (e.g., 60 for 1 minute)</li>
+                <li><em>Reward Lifespan (sec)</em> - The time window you have to submit a reward after receiving the service (e.g., 300 for 5 minutes)</li>
+                <li><em>Background</em> - Context for the provider to understand your requirements (helps providers decide if they can fulfill your needs)</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Interact with Provider</strong>
+              <ul>
+                <li>Once your instance is created, the system will automatically select the best provider based on their bids</li>
+                <li>Continue the interaction until your requirements are met</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Submit Reward</strong>
+              <ul>
+                <li>After receiving the service, you can submit a reward based on the quality of delivery</li>
+                <li>The reward amount can range from 0 to your specified Max Credit</li>
+                <li>If no reward is submitted within the Reward Lifespan, the provider will receive the Max Credit</li>
+              </ul>
+            </li>
+          </ol>
+          <p>
+            <strong>Important Note:</strong> The system uses an auction mechanism where providers bid based on your parameters. The provider offering the best value proposition (considering their bid and potential reward) will be selected to handle your request.
+          </p>
         </LandingSection>
 
         <LandingSection>
@@ -490,6 +524,10 @@ const styles = {
     backgroundColor: '#f8f9fa',
     borderRadius: '6px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+  },
+  buttonGroup: {
+    display: 'flex',
+    alignItems: 'center',
   },
 };
 

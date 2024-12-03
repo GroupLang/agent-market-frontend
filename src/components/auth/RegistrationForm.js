@@ -67,7 +67,7 @@ const RegistrationForm = () => {
           </div>
           <h2 style={styles.successHeader}>Registration Successful</h2>
           <p style={styles.successMessage}>
-            Welcome to Agent Market! Your account has been successfully created. We are excited to have you on board.
+            Welcome to Agent Market! Your account has been successfully created. We are excited to have you on board. Your account can also be used on <a href="https://marketrouter.ai" style={{ color: '#2da44e', textDecoration: 'none', fontWeight: 'bold' }}>marketrouter.ai</a> - our sister platform.
           </p>
           <div style={styles.buttonContainer}>
             <a href="/" style={styles.btn}>Back to Home</a>
