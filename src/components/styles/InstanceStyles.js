@@ -58,11 +58,18 @@ const Input = styled.input`
   width: 96%;
   padding: 12px;
   border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   ${FullWidthInputGroup} & {
     width: 92%;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.2);
   }
 `;
 
@@ -74,7 +81,8 @@ const CreateButton = styled.button`
   border-radius: 12px;
   padding: 16px 28px;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2);
@@ -100,17 +108,20 @@ const CreateButton = styled.button`
 `;
 
 const FormTitle = styled.h2`
-  font-size: 24px;
+  font-size: 28px;
   color: #333;
-  margin-bottom: 24px;
-  text-align: center;
+  margin-bottom: 32px;
+  text-align: left;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 `;
 
 const Label = styled.label`
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   color: #333;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 `;
 
 const InstanceList = styled.ul`
@@ -245,42 +256,44 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: white;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 500px;
-  margin: 10% auto;
-  text-align: center;
+  padding: 32px;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  outline: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
-  h3 {
-    margin-bottom: 20px;
-    color: #333;
-  }
-
-  ul {
-    list-style-type: none;
+  ${FormContainer} {
+    box-shadow: none;
     padding: 0;
-
-    li {
-      padding: 8px 0;
-      border-bottom: 1px solid #eee;
-      color: #555;
-    }
+    margin: 0;
   }
 
-  button {
-    margin-top: 20px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
-    cursor: pointer;
-    transition: background-color 0.3s;
+  /* Add scrollbar styling */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
 
-    &:hover {
-      background-color: #45a049;
-    }
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #666;
   }
 `;
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { format } from 'date-fns';
-import { FaSearch, FaSort, FaSync } from 'react-icons/fa';
+import { FaSearch, FaSort, FaSync, FaPlus } from 'react-icons/fa';
+import GitHubIntegration from './GitHubIntegration';
 import {
   TableContainer,
   FormContainer,
@@ -30,12 +31,15 @@ import {
   styles,
 } from '../styles/InstanceStyles';
 import { fetchInstances, createInstance, fetchInvolvedProviders } from '../../redux/actions/instanceActions';
+import { Modal } from '@mui/material';
+import { Button } from '@mui/material';
 
 const Instances = () => {
   const dispatch = useDispatch();
   const { instances, error, creatingInstance } = useSelector(state => state.instances);
   const { token: authToken } = useSelector(state => state.auth);
   const [showProvidersModal, setShowProvidersModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [providers, setProviders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortColumn, setSortColumn] = useState('id');
@@ -58,6 +62,9 @@ const Instances = () => {
   const handleCreateInstance = (e) => {
     e.preventDefault();
     dispatch(createInstance(authToken, instanceParams));
+    if (!error) {
+      setShowCreateModal(false);
+    }
   };
 
   const handleParamChange = (e) => {
@@ -253,7 +260,7 @@ const Instances = () => {
 
   const renderInstanceForm = () => (
     <FormContainer onSubmit={handleCreateInstance}>
-      <FormTitle>Create New Chat Instance</FormTitle>
+      <FormTitle>Create New Instance</FormTitle>
       <InputRow>
         <InputGroup>
           <Label htmlFor="max_credit_per_instance">Max Credit ($)</Label>
@@ -317,10 +324,51 @@ const Instances = () => {
   return (
     <PageContainer>
       <ContentContainer>
-        {renderInstanceForm()}
+        <Button
+          variant="contained"
+          style={{
+            backgroundColor: '#4CAF50',
+            '&:hover': {
+              backgroundColor: '#45a049'
+            }
+          }}
+          startIcon={<FaPlus />}
+          onClick={() => setShowCreateModal(true)}
+          sx={{ 
+            mb: 3,
+            borderRadius: 2,
+            textTransform: 'none',
+            fontSize: '1rem',
+            padding: '10px 20px',
+            backgroundColor: '#4CAF50',
+            '&:hover': {
+              backgroundColor: '#45a049'
+            }
+          }}
+        >
+          Create New Instance
+        </Button>
+
+        <Modal
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          aria-labelledby="create-instance-modal"
+          aria-describedby="modal-to-create-new-instance"
+        >
+          <ModalContent>
+            {renderInstanceForm()}
+          </ModalContent>
+        </Modal>
+
         <SectionSpacer />
-        {renderSelectedInstances()}
+        
+        {/* GitHub Integration Section */}
+        <GitHubIntegration />
+        
+        <SectionSpacer />
+
         {error && <ErrorMessage>{error}</ErrorMessage>}
+        {renderSelectedInstances()}
       </ContentContainer>
     </PageContainer>
   );
