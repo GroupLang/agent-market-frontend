@@ -50,11 +50,18 @@ export const fetchInstances = (authToken, status = 0) => async (dispatch) => {
       const data = await response.json();
       dispatch({ type: FETCH_INSTANCES_SUCCESS, payload: data.results || data });
     } catch (error) {
+      console.error('Error fetching instances:', error);
+      if (retries < maxRetries) {
+        retries++;
+        const backoffDelay = Math.min(1000 * Math.pow(2, retries), 10000);
+        console.log(`Retrying fetchInstances in ${backoffDelay}ms...`);
+        await delay(backoffDelay);
+        return attemptFetch();
+      }
       if (error.message.includes('401') && retries === maxRetries) {
         toast.error('Authentication failed. Please try logging in again.');
       }
       dispatch({ type: FETCH_INSTANCES_FAILURE, payload: error.message });
-      throw error;
     }
   };
 

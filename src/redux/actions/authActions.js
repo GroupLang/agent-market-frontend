@@ -96,29 +96,43 @@ const startTokenRefreshCycle = (dispatch) => {
 };
 
 export const fetchUserData = () => async (dispatch, getState) => {
-  try {
-    const { auth: { token: authToken } } = getState();
-    if (!authToken) {
-      throw new Error('No auth token found');
-    }
-    const response = await fetch(`${API_URL}/users/me/`, {
-      headers: { 'Authorization': `Bearer ${authToken}` }
-    });
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Unauthorized');
+  let retries = 0;
+  const maxRetries = 3;
+
+  const attemptFetch = async () => {
+    try {
+      const { auth: { token: authToken } } = getState();
+      if (!authToken) {
+        throw new Error('No auth token found');
       }
-      throw new Error('Failed to fetch user data');
+      const response = await fetch(`${API_URL}/users/me/`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Unauthorized');
+        }
+        throw new Error('Failed to fetch user data');
+      }
+      const data = await response.json();
+      dispatch({ type: FETCH_USER_DATA_SUCCESS, payload: data });
+      return data;
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      if (retries < maxRetries) {
+        retries++;
+        const backoffDelay = Math.min(1000 * Math.pow(2, retries), 10000);
+        console.log(`Retrying fetchUserData in ${backoffDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        return attemptFetch();
+      }
+      dispatch({ type: FETCH_USER_DATA_FAIL, payload: error.message });
+      if (error.message === 'Unauthorized') {
+        dispatch(logout());
+      }
+      throw error;
     }
-    const data = await response.json();
-    dispatch({ type: FETCH_USER_DATA_SUCCESS, payload: data });
-    return data;
-  } catch (error) {
-    console.error('Error fetching user data:', error);
-    dispatch({ type: FETCH_USER_DATA_FAIL, payload: error.message });
-    if (error.message === 'Unauthorized') {
-      dispatch(logout());
-    }
-    throw error;
-  }
+  };
+
+  return attemptFetch();
 };

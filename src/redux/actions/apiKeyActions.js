@@ -18,17 +18,31 @@ const getAxiosInstance = (store) => {
 };
 
 export const fetchApiKeys = () => async (dispatch, getState) => {
-  try {
-    const { token } = getState().auth;
-    const axios = getAxiosInstance(getState);
-    const response = await axios.get(`${API_URL}/list-api-keys`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    dispatch({ type: FETCH_API_KEYS_SUCCESS, payload: response.data });
-  } catch (error) {
-    console.error('Error fetching API keys:', error);
-    dispatch({ type: API_KEY_ERROR, payload: error.message });
-  }
+  let retries = 0;
+  const maxRetries = 3;
+
+  const attemptFetch = async () => {
+    try {
+      const { token } = getState().auth;
+      const axios = getAxiosInstance(getState);
+      const response = await axios.get(`${API_URL}/list-api-keys`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      dispatch({ type: FETCH_API_KEYS_SUCCESS, payload: response.data });
+    } catch (error) {
+      console.error('Error fetching API keys:', error);
+      if (retries < maxRetries) {
+        retries++;
+        const backoffDelay = Math.min(1000 * Math.pow(2, retries), 10000);
+        console.log(`Retrying fetchApiKeys in ${backoffDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        return attemptFetch();
+      }
+      dispatch({ type: API_KEY_ERROR, payload: error.message });
+    }
+  };
+
+  return attemptFetch();
 };
 
 export const createApiKey = (name, isLive) => async (dispatch, getState) => {
