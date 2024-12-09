@@ -16,7 +16,7 @@ export const ADD_MESSAGE = 'ADD_MESSAGE';
 export const fetchConversations = (authToken) => async (dispatch) => {
   dispatch({ type: FETCH_CONVERSATIONS_REQUEST });
   try {
-    const response = await fetch(`https://api.agent.market/v1/instances/?instance_status=3`, {
+    const response = await fetch(`https://api.agent.market/v1/instances/for-current-user?instance_status=3`, {
       headers: { 'Authorization': `Bearer ${authToken}` }
     });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
