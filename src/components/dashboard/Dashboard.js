@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import styled from 'styled-components';
 import Header from '../layout/Header';
 import Footer from '../layout/Footer';
 import UserInfoSection from './UserInfoSection';
@@ -10,10 +11,86 @@ import ApiKeySection from './ApiKeySection';
 import ApiKeyModal from '../modals/ApiKeyModal';
 import InstancesSection from '../instances/Instances';
 import ChatSection from '../chat/ChatSection';
-import { styles } from '../styles/DashboardStyles';
 import { logout, fetchUserData } from '../../redux/actions/authActions';
 import { fetchApiKeys, createApiKey, deleteApiKey, toggleApiKey } from '../../redux/actions/apiKeyActions';
 import { fetchWalletBalance, createDeposit, createWithdrawal, createPaymentAccount } from '../../redux/actions/walletActions';
+
+const Container = styled.div`
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1em;
+  background-color: #f6f8fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 768px) {
+    padding: 0 0.5em;
+  }
+`;
+
+const Content = styled.div`
+  flex: 1;
+  padding-top: 2em;
+
+  @media (max-width: 768px) {
+    padding-top: 1em;
+  }
+`;
+
+const TabContainer = styled.div`
+  display: flex;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #e1e4e8;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    margin: 0 -0.5em 1.5rem -0.5em;
+    padding: 0 0.5em;
+  }
+`;
+
+const TabButton = styled.button`
+  padding: 1rem 2rem;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: ${props => props.$active ? '#0366d6' : '#586069'};
+  font-weight: ${props => props.$active ? '600' : '400'};
+  border-bottom: 2px solid ${props => props.$active ? '#0366d6' : 'transparent'};
+  margin-bottom: -2px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: #0366d6;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9rem;
+  }
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.5em;
+  color: #586069;
+`;
+
+const SectionSeparator = styled.div`
+  margin-bottom: 2em;
+`;
 
 const Dashboard = () => {
   const history = useHistory();
@@ -198,29 +275,29 @@ const Dashboard = () => {
   const totalPages = Math.max(1, Math.ceil(sortedAndFilteredKeys.length / itemsPerPage));
 
   if (loading) {
-    return <div style={styles.loading}>Loading...</div>;
+    return <LoadingContainer>Loading...</LoadingContainer>;
   }
 
   return (
-    <div style={styles.container}>
+    <Container>
       <Header handleLogout={handleLogout} />
-      <div style={styles.content}>
-        <div style={styles.tabContainer}>
+      <Content>
+        <TabContainer>
           {['dashboard', 'instances', 'chat'].map((tab) => (
-            <button
+            <TabButton
               key={tab}
-              style={activeTab === tab ? styles.activeTab : styles.tab}
+              $active={activeTab === tab}
               onClick={() => setActiveTab(tab)}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
+            </TabButton>
           ))}
-        </div>
+        </TabContainer>
 
         {activeTab === 'dashboard' && (
           <>
             <UserInfoSection userData={userData} />
-            <div style={styles.sectionSeparator}>
+            <SectionSeparator>
               <ApiKeySection 
                 {...apiKeyState}
                 setSearchTerm={(searchTerm) => setApiKeyState(prev => ({ ...prev, searchTerm }))}
@@ -234,7 +311,7 @@ const Dashboard = () => {
                 totalPages={totalPages}
                 handleSort={handleSort}
               />
-            </div>
+            </SectionSeparator>
             <WalletSection 
               wallet={wallet}
               {...walletState}
@@ -248,7 +325,7 @@ const Dashboard = () => {
         )}
         {activeTab === 'instances' && <InstancesSection />}
         {activeTab === 'chat' && <ChatSection />}
-      </div>
+      </Content>
       <Footer />
       <ApiKeyModal 
         isOpen={isModalOpen}
@@ -257,7 +334,7 @@ const Dashboard = () => {
         handleCopyClick={handleCopyClick}
         copySuccess={copySuccess}
       />
-    </div>
+    </Container>
   );
 };
 

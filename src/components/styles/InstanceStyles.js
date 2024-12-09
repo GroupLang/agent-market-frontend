@@ -23,6 +23,11 @@ const FormContainer = styled.form`
   max-width: 800px;
   margin: 0 auto;
   width: 100%;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    gap: 16px;
+  }
 `;
 
 const InputRow = styled.div`
@@ -34,6 +39,11 @@ const InputRow = styled.div`
   @media (min-width: 768px) {
     flex-direction: row;
     justify-content: flex-start;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    gap: 16px;
   }
 `;
 
@@ -66,6 +76,12 @@ const Input = styled.input`
     width: 92%;
   }
 
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+  }
+
   &:focus {
     outline: none;
     border-color: #4CAF50;
@@ -87,6 +103,12 @@ const CreateButton = styled.button`
   transition: all 0.3s ease;
   box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2);
   margin-top: 24px;
+
+  @media (max-width: 768px) {
+    padding: 12px 20px;
+    font-size: 16px;
+    margin-top: 16px;
+  }
 
   &:hover {
     background-color: #45a049;
@@ -114,6 +136,11 @@ const FormTitle = styled.h2`
   text-align: left;
   font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
 `;
 
 const Label = styled.label`
@@ -140,6 +167,13 @@ const InstanceItem = styled.li`
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+  }
 `;
 
 const InstanceInfo = styled.span`
@@ -187,6 +221,10 @@ const ContentContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+
+  @media (max-width: 768px) {
+    padding: 10px;
+  }
 `;
 
 const SectionSpacer = styled.div`
@@ -207,6 +245,11 @@ const RefreshButton = styled.button`
   cursor: pointer;
   transition: background-color 0.3s;
 
+  @media (max-width: 768px) {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
   &:hover {
     background-color: #45a049;
   }
@@ -219,6 +262,12 @@ const RefreshButton = styled.button`
 const StyledTable = styled.table`
   width: 100%;
   border-collapse: collapse;
+
+  @media (max-width: 768px) {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
 `;
 
 const StyledTableHeader = styled.th`
@@ -227,6 +276,11 @@ const StyledTableHeader = styled.th`
   position: sticky;
   top: 0;
   z-index: 1;
+
+  @media (max-width: 768px) {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
 `;
 
 const StyledTableRow = styled.tr`
@@ -242,6 +296,11 @@ const StyledTableData = styled.td`
   padding: 12px 16px;
   font-size: 14px;
   border-bottom: 1px solid #ddd;
+
+  @media (max-width: 768px) {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
 `;
 
 /* Modal Styles */

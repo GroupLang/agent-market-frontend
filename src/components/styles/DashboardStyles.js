@@ -156,11 +156,14 @@ export const styles = {
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     maxWidth: '1200px',
     margin: '0 auto',
-    padding: '0 2em',
+    padding: '0 1em',
     backgroundColor: '#f6f8fa',
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
+    '@media (max-width: 768px)': {
+      padding: '0 0.5em',
+    },
   },
   nav: {
     display: 'flex',
@@ -168,6 +171,11 @@ export const styles = {
     alignItems: 'center',
     padding: '1em 0',
     borderBottom: '1px solid #e1e4e8',
+    '@media (max-width: 768px)': {
+      padding: '0.5em 0',
+      flexDirection: 'column',
+      gap: '0.5em',
+    },
   },
   logo: {
     fontSize: '1.5em',
@@ -177,6 +185,9 @@ export const styles = {
   content: {
     flex: 1,
     paddingTop: '2em',
+    '@media (max-width: 768px)': {
+      paddingTop: '1em',
+    },
   },
   title: {
     fontSize: '2em',
@@ -195,6 +206,11 @@ export const styles = {
     borderRadius: '8px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
     marginBottom: '2em',
+    '@media (max-width: 768px)': {
+      flexDirection: 'column',
+      padding: '1em',
+      textAlign: 'center',
+    },
   },
   avatar: {
     width: '80px',
@@ -205,6 +221,10 @@ export const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: '2em',
+    '@media (max-width: 768px)': {
+      marginRight: '0',
+      marginBottom: '1em',
+    },
   },
   userInfo: {
     '& h2': {
@@ -222,6 +242,9 @@ export const styles = {
     borderRadius: '8px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
     marginBottom: '2em',
+    '@media (max-width: 768px)': {
+      padding: '1em',
+    },
   },
   sectionTitle: {
     fontSize: '1.5em',
@@ -236,6 +259,10 @@ export const styles = {
     justifyContent: 'space-between',
     gap: '2em',
     marginBottom: '2em',
+    '@media (max-width: 768px)': {
+      flexDirection: 'column',
+      gap: '1em',
+    },
   },
   balanceDisplay: {
     flex: 1,
@@ -258,6 +285,10 @@ export const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     gap: '2em',
+    '@media (max-width: 768px)': {
+      flexDirection: 'column',
+      gap: '1em',
+    },
   },
   walletAction: {
     flex: 1,
@@ -337,6 +368,10 @@ export const styles = {
     alignItems: 'center',
     gap: '1em',
     flexWrap: 'wrap',
+    '@media (max-width: 768px)': {
+      flexDirection: 'column',
+      alignItems: 'stretch',
+    },
   },
   checkboxLabel: {
     display: 'flex',
@@ -357,6 +392,9 @@ export const styles = {
     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
     borderRadius: '8px',
     marginBottom: '1em',
+    '@media (max-width: 768px)': {
+      fontSize: '0.9em',
+    },
   },
   tableHeader: {
     textAlign: 'center',
@@ -472,6 +510,11 @@ export const styles = {
     alignItems: 'center',
     fontSize: '0.9em',
     color: '#586069',
+    '@media (max-width: 768px)': {
+      flexDirection: 'column',
+      gap: '1em',
+      textAlign: 'center',
+    },
   },
   footerLink: {
     color: '#0366d6',
@@ -503,6 +546,10 @@ export const styles = {
       backgroundColor: '#ffffff',
       boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
       fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+      '@media (max-width: 768px)': {
+        width: '95%',
+        padding: '15px',
+      },
     },
   },
   modalTitle: {
@@ -520,6 +567,9 @@ export const styles = {
     display: 'flex',
     alignItems: 'center',
     marginBottom: '20px',
+    '@media (max-width: 768px)': {
+      flexDirection: 'column',
+    },
   },
   apiKeyDisplay: {
     flex: 1,
@@ -761,6 +811,10 @@ export const styles = {
     display: 'flex',
     marginBottom: '2rem',
     borderBottom: '1px solid #e0e0e0',
+    '@media (max-width: 768px)': {
+      flexDirection: 'column',
+      gap: '0.5em',
+    },
   },
   tab: {
     padding: '1rem 2rem',
@@ -771,6 +825,11 @@ export const styles = {
     color: '#666',
     transition: 'all 0.3s ease',
     borderBottom: '3px solid transparent',
+    '@media (max-width: 768px)': {
+      padding: '0.5rem 1rem',
+      width: '100%',
+      textAlign: 'center',
+    },
   },
   activeTab: {
     padding: '1rem 2rem',
@@ -781,6 +840,11 @@ export const styles = {
     fontSize: '1rem',
     color: '#007bff',
     fontWeight: 'bold',
+    '@media (max-width: 768px)': {
+      padding: '0.5rem 1rem',
+      width: '100%',
+      textAlign: 'center',
+    },
   },
   dashboardContent: {
     backgroundColor: '#ffffff',

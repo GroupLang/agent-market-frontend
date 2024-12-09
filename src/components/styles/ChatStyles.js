@@ -7,6 +7,11 @@ export const ChatContainer = styled.div`
   display: flex;
   height: calc(100vh - 100px);
   background-color: #f8f9fa;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    height: calc(100vh - 60px);
+  }
 `;
 
 export const Sidebar = styled.div`
@@ -16,6 +21,16 @@ export const Sidebar = styled.div`
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    width: 100%;
+    height: 60px;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 10px;
+    border-right: none;
+    border-bottom: 1px solid #dee2e6;
+  }
 `;
 
 export const ConversationList = styled.div`
@@ -27,6 +42,10 @@ export const ConversationList = styled.div`
   &::-webkit-scrollbar-thumb {
     background-color: #ced4da;
     border-radius: 4px;
+  }
+
+  @media (max-width: 768px) {
+    display: none;
   }
 `;
 
@@ -69,6 +88,10 @@ export const MainContent = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 768px) {
+    height: calc(100vh - 120px);
+  }
 `;
 
 export const MessageList = styled.div`
@@ -81,6 +104,10 @@ export const MessageList = styled.div`
   &::-webkit-scrollbar-thumb {
     background-color: #ced4da;
     border-radius: 4px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 10px;
   }
 `;
 
@@ -105,6 +132,12 @@ export const MessageBubble = styled.div`
     background-color: #ffc107;
     color: #212529;
   `}
+
+  @media (max-width: 768px) {
+    max-width: 85%;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
 `;
 
 export const InputArea = styled.div`
@@ -112,6 +145,10 @@ export const InputArea = styled.div`
   padding: 20px;
   background-color: #ffffff;
   border-top: 1px solid #dee2e6;
+
+  @media (max-width: 768px) {
+    padding: 10px;
+  }
 `;
 
 export const Input = styled.input`
@@ -124,6 +161,11 @@ export const Input = styled.input`
     outline: none;
     border-color: #80bdff;
     box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+  }
+
+  @media (max-width: 768px) {
+    padding: 8px 12px;
+    font-size: 14px;
   }
 `;
 
@@ -138,6 +180,10 @@ export const SendButton = styled.button`
   transition: background-color 0.2s ease;
   &:hover {
     background-color: #0056b3;
+  }
+
+  @media (max-width: 768px) {
+    padding: 8px 12px;
   }
 `;
 
@@ -186,8 +232,13 @@ export const ModalContent = styled.div`
   width: 100%;
   position: relative;
   padding: 20px;
-  max-height: 90vh; // Add this line to limit the maximum height
-  overflow-y: auto; // Add this line to enable scrolling if content exceeds max-height
+  max-height: 90vh;
+  overflow-y: auto;
+
+  @media (max-width: 768px) {
+    padding: 15px;
+    width: 95%;
+  }
 `;
 
 export const ModalCloseIcon = styled(FaTimes)`
@@ -223,6 +274,12 @@ export const ModalInput = styled.input`
     border-color: #80bdff;
     box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
   }
+
+  @media (max-width: 768px) {
+    width: 90%;
+    padding: 12px;
+    font-size: 16px;
+  }
 `;
 
 export const ModalButton = styled.button`
@@ -245,6 +302,11 @@ export const ModalButton = styled.button`
   &:disabled {
     background-color: #6c757d;
     cursor: not-allowed;
+  }
+
+  @media (max-width: 768px) {
+    padding: 12px 16px;
+    font-size: 16px;
   }
 `;
 

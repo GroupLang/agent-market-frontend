@@ -77,8 +77,34 @@ export const fetchWalletBalance = () => async (dispatch, getState) => {
     dispatch(setWalletBalance(response.data));
   } catch (error) {
     console.error('Error fetching wallet balance:', error);
-    dispatch(setWalletError('Failed to fetch wallet balance'));
-    toast.error('Failed to fetch wallet balance');
+    
+    // Handle specific error cases
+    if (!navigator.onLine) {
+      dispatch(setWalletError('No internet connection. Please check your network.'));
+      toast.error('No internet connection. Please check your network.');
+    } else if (error.response) {
+      // Handle different HTTP error status codes
+      switch (error.response.status) {
+        case 401:
+          dispatch(setWalletError('Session expired. Please login again.'));
+          toast.error('Session expired. Please login again.');
+          break;
+        case 403:
+          dispatch(setWalletError('Access denied. Please check your permissions.'));
+          toast.error('Access denied. Please check your permissions.');
+          break;
+        case 500:
+          dispatch(setWalletError('Server error. Please try again later.'));
+          toast.error('Server error. Please try again later.');
+          break;
+        default:
+          dispatch(setWalletError(error.response.data?.detail || 'Failed to fetch wallet balance'));
+          toast.error(error.response.data?.detail || 'Failed to fetch wallet balance');
+      }
+    } else {
+      dispatch(setWalletError('Network error. Please try again.'));
+      toast.error('Network error. Please try again.');
+    }
   } finally {
     dispatch(setWalletLoading(false));
   }

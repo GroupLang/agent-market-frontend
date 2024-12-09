@@ -4,8 +4,6 @@ import {
   LOGIN_SUCCESS,
   LOGIN_FAIL,
   LOGOUT,
-  REFRESH_TOKEN_SUCCESS,
-  REFRESH_TOKEN_FAIL,
 } from '../actions/authActions';
 
 const initialState = {
@@ -25,7 +23,6 @@ const authReducer = (state = initialState, action) => {
       };
     case REGISTER_FAIL:
     case LOGIN_FAIL:
-    case REFRESH_TOKEN_FAIL:
       return {
         ...state,
         isAuthenticated: false,
@@ -34,7 +31,6 @@ const authReducer = (state = initialState, action) => {
         error: action.payload,
       };
     case LOGIN_SUCCESS:
-    case REFRESH_TOKEN_SUCCESS:
       return {
         ...state,
         isAuthenticated: true,
