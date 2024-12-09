@@ -19,23 +19,46 @@ export const REMOVE_REPOSITORY_REQUEST = 'REMOVE_REPOSITORY_REQUEST';
 export const REMOVE_REPOSITORY_SUCCESS = 'REMOVE_REPOSITORY_SUCCESS';
 export const REMOVE_REPOSITORY_FAILURE = 'REMOVE_REPOSITORY_FAILURE';
 
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const fetchInstances = (authToken, status = 0) => async (dispatch) => {
   dispatch({ type: FETCH_INSTANCES_REQUEST });
-  try {
-    const response = await fetch(`https://api.agent.market/v1/instances/for-current-user?instance_status=${status}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${authToken}`
+  let retries = 0;
+  const maxRetries = 3;
+
+  const attemptFetch = async () => {
+    try {
+      const response = await fetch(`https://api.agent.market/v1/instances/for-current-user?instance_status=${status}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      if (response.status === 401 && retries < maxRetries) {
+        retries++;
+        const backoffDelay = Math.min(1000 * Math.pow(2, retries), 10000); // exponential backoff with max 10s
+        console.log(`Attempt ${retries} failed with 401, retrying in ${backoffDelay}ms...`);
+        await delay(backoffDelay);
+        return attemptFetch();
       }
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      dispatch({ type: FETCH_INSTANCES_SUCCESS, payload: data.results || data });
+    } catch (error) {
+      if (error.message.includes('401') && retries === maxRetries) {
+        toast.error('Authentication failed. Please try logging in again.');
+      }
+      dispatch({ type: FETCH_INSTANCES_FAILURE, payload: error.message });
+      throw error;
     }
-    const data = await response.json();
-    dispatch({ type: FETCH_INSTANCES_SUCCESS, payload: data.results || data });
-  } catch (error) {
-    dispatch({ type: FETCH_INSTANCES_FAILURE, payload: error.message });
-  }
+  };
+
+  return attemptFetch();
 };
 
 export const createInstance = (authToken, instanceParams) => async (dispatch) => {

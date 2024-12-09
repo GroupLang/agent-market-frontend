@@ -3,10 +3,13 @@ import {
   CREATE_API_KEY_SUCCESS,
   DELETE_API_KEY_SUCCESS,
   TOGGLE_API_KEY_SUCCESS,
+  API_KEY_ERROR,
 } from '../actions/apiKeyActions';
 
 const initialState = {
   keys: [],
+  error: null,
+  isLoading: false
 };
 
 const apiKeyReducer = (state = initialState, action) => {
@@ -15,16 +18,22 @@ const apiKeyReducer = (state = initialState, action) => {
       return {
         ...state,
         keys: action.payload,
+        error: null,
+        isLoading: false
       };
     case CREATE_API_KEY_SUCCESS:
       return {
         ...state,
         keys: [...state.keys, action.payload],
+        error: null,
+        isLoading: false
       };
     case DELETE_API_KEY_SUCCESS:
       return {
         ...state,
         keys: state.keys.filter(key => key.name !== action.payload),
+        error: null,
+        isLoading: false
       };
     case TOGGLE_API_KEY_SUCCESS:
       return {
@@ -32,6 +41,14 @@ const apiKeyReducer = (state = initialState, action) => {
         keys: state.keys.map(key =>
           key.name === action.payload.name ? action.payload : key
         ),
+        error: null,
+        isLoading: false
+      };
+    case API_KEY_ERROR:
+      return {
+        ...state,
+        error: action.payload,
+        isLoading: false
       };
     default:
       return state;
