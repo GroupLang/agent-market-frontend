@@ -324,23 +324,24 @@ const Instances = () => {
   return (
     <PageContainer>
       <ContentContainer>
+        <SectionSpacer />
+        
         <Button
           variant="contained"
-          style={{
-            backgroundColor: '#4CAF50',
-            '&:hover': {
-              backgroundColor: '#45a049'
-            }
-          }}
           startIcon={<FaPlus />}
           onClick={() => setShowCreateModal(true)}
           sx={{ 
-            mb: 3,
-            borderRadius: 2,
+            mb: 4,
+            ml: 'auto',
+            mr: 3,
+            display: 'flex',
+            borderRadius: 1.5,
             textTransform: 'none',
-            fontSize: '1rem',
-            padding: '10px 20px',
+            fontSize: '0.875rem',
+            padding: '6px 16px',
             backgroundColor: '#4CAF50',
+            minWidth: 'auto',
+            height: '36px',
             '&:hover': {
               backgroundColor: '#45a049'
             }
@@ -359,8 +360,6 @@ const Instances = () => {
             {renderInstanceForm()}
           </ModalContent>
         </Modal>
-
-        <SectionSpacer />
         
         {/* GitHub Integration Section */}
         <GitHubIntegration />
