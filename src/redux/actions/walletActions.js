@@ -69,45 +69,58 @@ export const createPaymentAccount = (country) => async (dispatch, getState) => {
 
 export const fetchWalletBalance = () => async (dispatch, getState) => {
   dispatch(setWalletLoading(true));
-  try {
-    const { token } = getState().auth;
-    const response = await axios.get(`${API_URL}/balance`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    dispatch(setWalletBalance(response.data));
-  } catch (error) {
-    console.error('Error fetching wallet balance:', error);
-    
-    // Handle specific error cases
-    if (!navigator.onLine) {
-      dispatch(setWalletError('No internet connection. Please check your network.'));
-      toast.error('No internet connection. Please check your network.');
-    } else if (error.response) {
-      // Handle different HTTP error status codes
-      switch (error.response.status) {
-        case 401:
-          dispatch(setWalletError('Session expired. Please login again.'));
-          toast.error('Session expired. Please login again.');
-          break;
-        case 403:
-          dispatch(setWalletError('Access denied. Please check your permissions.'));
-          toast.error('Access denied. Please check your permissions.');
-          break;
-        case 500:
-          dispatch(setWalletError('Server error. Please try again later.'));
-          toast.error('Server error. Please try again later.');
-          break;
-        default:
-          dispatch(setWalletError(error.response.data?.detail || 'Failed to fetch wallet balance'));
-          toast.error(error.response.data?.detail || 'Failed to fetch wallet balance');
+  let retries = 0;
+  const maxRetries = 3;
+
+  const attemptFetch = async () => {
+    try {
+      const { token } = getState().auth;
+      const response = await axios.get(`${API_URL}/balance`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      dispatch(setWalletBalance(response.data));
+    } catch (error) {
+      console.error('Error fetching wallet balance:', error);
+      if (retries < maxRetries) {
+        retries++;
+        const backoffDelay = Math.min(1000 * Math.pow(2, retries), 10000);
+        console.log(`Retrying fetchWalletBalance in ${backoffDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        return attemptFetch();
       }
-    } else {
-      dispatch(setWalletError('Network error. Please try again.'));
-      toast.error('Network error. Please try again.');
+      // Handle specific error cases
+      if (!navigator.onLine) {
+        dispatch(setWalletError('No internet connection. Please check your network.'));
+        toast.error('No internet connection. Please check your network.');
+      } else if (error.response) {
+        // Handle different HTTP error status codes
+        switch (error.response.status) {
+          case 401:
+            dispatch(setWalletError('Session expired. Please login again.'));
+            toast.error('Session expired. Please login again.');
+            break;
+          case 403:
+            dispatch(setWalletError('Access denied. Please check your permissions.'));
+            toast.error('Access denied. Please check your permissions.');
+            break;
+          case 500:
+            dispatch(setWalletError('Server error. Please try again later.'));
+            toast.error('Server error. Please try again later.');
+            break;
+          default:
+            dispatch(setWalletError(error.response.data?.detail || 'Failed to fetch wallet balance'));
+            toast.error(error.response.data?.detail || 'Failed to fetch wallet balance');
+        }
+      } else {
+        dispatch(setWalletError('Network error. Please try again.'));
+        toast.error('Network error. Please try again.');
+      }
+    } finally {
+      dispatch(setWalletLoading(false));
     }
-  } finally {
-    dispatch(setWalletLoading(false));
-  }
+  };
+
+  return attemptFetch();
 };
 
 export const createDeposit = (amount) => async (dispatch, getState) => {
