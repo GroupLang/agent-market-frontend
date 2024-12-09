@@ -51,10 +51,6 @@ const GitHubIntegration = () => {
     }
   };
 
-  if (repositoryLoading) {
-    return <CircularProgress />;
-  }
-
   return (
     <Box sx={{ mt: 3 }}>
       <Typography variant="h5" gutterBottom sx={{ color: '#1976d2', fontWeight: 500, mb: 3 }}>
