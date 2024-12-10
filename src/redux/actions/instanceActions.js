@@ -18,6 +18,9 @@ export const FETCH_REPOSITORIES_FAILURE = 'FETCH_REPOSITORIES_FAILURE';
 export const REMOVE_REPOSITORY_REQUEST = 'REMOVE_REPOSITORY_REQUEST';
 export const REMOVE_REPOSITORY_SUCCESS = 'REMOVE_REPOSITORY_SUCCESS';
 export const REMOVE_REPOSITORY_FAILURE = 'REMOVE_REPOSITORY_FAILURE';
+export const FETCH_REPOSITORY_ISSUES_REQUEST = 'FETCH_REPOSITORY_ISSUES_REQUEST';
+export const FETCH_REPOSITORY_ISSUES_SUCCESS = 'FETCH_REPOSITORY_ISSUES_SUCCESS';
+export const FETCH_REPOSITORY_ISSUES_FAILURE = 'FETCH_REPOSITORY_ISSUES_FAILURE';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -113,13 +116,37 @@ export const fetchInvolvedProviders = (authToken, instance_id) => async (dispatc
   }
 };
 
+export const fetchRepositoryIssues = (authToken, repoUrl) => async (dispatch) => {
+  dispatch({ type: FETCH_REPOSITORY_ISSUES_REQUEST });
+  try {
+    const url = new URL('https://api.agent.market/v1/github/repositories/issues');
+    url.searchParams.append('repo_url', repoUrl);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch repository issues: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Fetched issues:', data);
+    dispatch({ type: FETCH_REPOSITORY_ISSUES_SUCCESS, payload: { repoUrl, issues: data } });
+    return data;
+  } catch (error) {
+    console.log('Error fetching repository issues:', error);
+    dispatch({ type: FETCH_REPOSITORY_ISSUES_FAILURE, payload: error.message });
+    throw error;
+  }
+};
+
 export const addRepository = (authToken, repoUrl, defaultReward) => async (dispatch) => {
-  console.log('Adding repository with params:', { repoUrl, defaultReward });
-  console.log('Auth token:', authToken ? 'Present' : 'Missing');
-  
   dispatch({ type: ADD_REPOSITORY_REQUEST });
   try {
-    console.log('Making POST request to /github/repositories');
     const url = new URL('https://api.agent.market/v1/github/repositories');
     url.searchParams.append('repo_url', repoUrl);
     url.searchParams.append('default_reward', defaultReward.toString());
@@ -131,19 +158,22 @@ export const addRepository = (authToken, repoUrl, defaultReward) => async (dispa
       }
     });
     
-    console.log('Response status:', response.status);
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Error response:', errorText);
       throw new Error(`Failed to add repository: ${errorText}`);
     }
     
     const data = await response.json();
-    console.log('Success response:', data);
     dispatch({ type: ADD_REPOSITORY_SUCCESS, payload: data });
+    
+    try {
+      await dispatch(fetchRepositoryIssues(authToken, repoUrl));
+    } catch (error) {
+      console.error('Error fetching repository issues:', error);
+    }
+    
     toast.success('Repository added successfully! From now on, all open issues in this repository will be solved.');
   } catch (error) {
-    console.error('Error in addRepository:', error);
     dispatch({ type: ADD_REPOSITORY_FAILURE, payload: error.message });
     toast.error('Failed to add repository');
   }

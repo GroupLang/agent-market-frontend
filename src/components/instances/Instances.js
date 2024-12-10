@@ -331,11 +331,11 @@ const Instances = () => {
           startIcon={<FaPlus />}
           onClick={() => setShowCreateModal(true)}
           sx={{ 
-            mb: 4,
+            mb: 1,
             ml: 'auto',
             mr: 3,
             display: 'flex',
-            borderRadius: 1.5,
+            borderRadius: 1,
             textTransform: 'none',
             fontSize: '0.875rem',
             padding: '6px 16px',

@@ -13,12 +13,16 @@ import {
   FETCH_REPOSITORIES_FAILURE,
   REMOVE_REPOSITORY_REQUEST,
   REMOVE_REPOSITORY_SUCCESS,
-  REMOVE_REPOSITORY_FAILURE
+  REMOVE_REPOSITORY_FAILURE,
+  FETCH_REPOSITORY_ISSUES_REQUEST,
+  FETCH_REPOSITORY_ISSUES_SUCCESS,
+  FETCH_REPOSITORY_ISSUES_FAILURE
 } from '../actions/instanceActions';
 
 const initialState = {
   instances: [],
   repositories: [],
+  repositoryIssues: {},
   loading: false,
   error: null,
   creatingInstance: false,
@@ -59,13 +63,32 @@ const instanceReducer = (state = initialState, action) => {
     case REMOVE_REPOSITORY_REQUEST:
       return { ...state, repositoryLoading: true, repositoryError: null };
     case REMOVE_REPOSITORY_SUCCESS:
+      const { [action.payload]: removedIssues, ...remainingIssues } = state.repositoryIssues;
       return {
         ...state,
         repositoryLoading: false,
-        repositories: state.repositories.filter(repo => repo.repo_url !== action.payload)
+        repositories: state.repositories.filter(repo => repo.repo_url !== action.payload),
+        repositoryIssues: remainingIssues
       };
     case REMOVE_REPOSITORY_FAILURE:
       return { ...state, repositoryLoading: false, repositoryError: action.payload };
+    case FETCH_REPOSITORY_ISSUES_REQUEST:
+      return { ...state, repositoryLoading: true };
+    case FETCH_REPOSITORY_ISSUES_SUCCESS:
+      return {
+        ...state,
+        repositoryLoading: false,
+        repositoryIssues: {
+          ...state.repositoryIssues,
+          [action.payload.repoUrl]: action.payload.issues
+        }
+      };
+    case FETCH_REPOSITORY_ISSUES_FAILURE:
+      return {
+        ...state,
+        repositoryLoading: false,
+        repositoryError: action.payload
+      };
     default:
       return state;
   }
