@@ -4,6 +4,8 @@ const TableContainer = styled.div`
   max-height: 400px;
   overflow-y: auto;
   margin-bottom: 16px;
+  background-color: #ffffff;
+  border-radius: 8px;
 
   /* Responsive adjustments */
   @media (max-width: 768px) {
@@ -194,6 +196,12 @@ const SelectedInstancesSection = styled.div`
   background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  ${TableContainer} {
+    margin: 16px 0;
+    background-color: transparent;
+    border-radius: 0;
+  }
 `;
 
 const SelectedInstancesTitle = styled.h3`
@@ -217,13 +225,13 @@ const PageContainer = styled.div`
 
 const ContentContainer = styled.div`
   flex: 1;
-  padding: 20px;
+  padding: 0px 20px 20px;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
 
   @media (max-width: 768px) {
-    padding: 10px;
+    padding: 8px 10px 10px;
   }
 `;
 
@@ -262,6 +270,7 @@ const RefreshButton = styled.button`
 const StyledTable = styled.table`
   width: 100%;
   border-collapse: collapse;
+  background-color: #ffffff;
 
   @media (max-width: 768px) {
     display: block;
@@ -276,6 +285,10 @@ const StyledTableHeader = styled.th`
   position: sticky;
   top: 0;
   z-index: 1;
+  text-align: left;
+  border-bottom: 2px solid #e9ecef;
+  color: #495057;
+  font-weight: 600;
 
   @media (max-width: 768px) {
     padding: 8px 12px;
@@ -284,18 +297,19 @@ const StyledTableHeader = styled.th`
 `;
 
 const StyledTableRow = styled.tr`
-  background-color: ${({ index }) => (index % 2 === 0 ? '#ffffff' : '#f1f1f1')};
+  background-color: ${({ index }) => (index % 2 === 0 ? '#ffffff' : '#f8f9fa')};
   transition: background-color 0.3s;
 
   &:hover {
-    background-color: #e6f7ff;
+    background-color: #e9ecef;
   }
 `;
 
 const StyledTableData = styled.td`
   padding: 12px 16px;
   font-size: 14px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #e9ecef;
+  color: #495057;
 
   @media (max-width: 768px) {
     padding: 8px 12px;

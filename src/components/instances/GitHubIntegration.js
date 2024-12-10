@@ -43,14 +43,28 @@ const GitHubIntegration = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [countdowns, setCountdowns] = useState({});
   
-  const { repositories, repositoryIssues, repositoryLoading, repositoryError } = useSelector(state => state.instances);
+  const { repositories, repositoryIssues, repositoryLoading, repositoryError, blockingIssue } = useSelector(state => state.instances);
   const { token: authToken } = useSelector(state => state.auth);
 
   const calculateTimeRemaining = (createdAt) => {
-    const creationDate = new Date(createdAt);
-    const blockDate = new Date(creationDate.getTime() + 24 * 60 * 60 * 1000); // 1 day after creation
+    // Parse the ISO string directly as UTC
+    const creationDate = new Date(createdAt + 'Z'); // Ensure UTC by appending Z if not present
+    const blockDate = new Date(creationDate.getTime() + (24 * 60 * 60 * 1000));
     const now = new Date();
-    const timeRemaining = blockDate - now;
+
+    // Get all timestamps in UTC
+    const creationUTC = creationDate.getTime();
+    const blockUTC = blockDate.getTime();
+    const nowUTC = now.getTime();
+
+    console.log('UTC Debug:', {
+      createdAt,
+      creationDate: creationDate.toISOString(),
+      blockDate: blockDate.toISOString(),
+      now: now.toISOString()
+    });
+    
+    const timeRemaining = blockUTC - nowUTC;
 
     if (timeRemaining <= 0) {
       return { expired: true, timeString: 'Block payment window has ended' };
@@ -134,6 +148,10 @@ const GitHubIntegration = () => {
       dispatch(blockIssue(authToken, repoUrl, issueNumber))
         .catch(error => {
           console.error('Error blocking issue:', error);
+          if (error.response && error.response.status === 400) {
+            setToastMessage('Cannot block payment: Bidding process has not finished');
+            setOpenToast(true);
+          }
         });
     }
   };
@@ -604,9 +622,9 @@ const GitHubIntegration = () => {
                           <Button
                             variant="outlined"
                             size="small"
-                            startIcon={<MoneyOffIcon />}
+                            startIcon={blockingIssue ? <CircularProgress size={16} /> : <MoneyOffIcon />}
                             onClick={() => handleBlockIssue(repo.repo_url, issue.issue_number)}
-                            disabled={issue.payment_blocked}
+                            disabled={issue.payment_blocked || blockingIssue}
                             sx={{
                               borderColor: '#d0d7de',
                               color: '#24292f',
@@ -625,7 +643,7 @@ const GitHubIntegration = () => {
                               }
                             }}
                           >
-                            Block Payment
+                            {blockingIssue ? 'Blocking...' : 'Block Payment'}
                           </Button>
                         </Box>
                       )}

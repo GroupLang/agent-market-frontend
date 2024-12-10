@@ -166,9 +166,31 @@ const Instances = () => {
             </StyledSelect>
             <InstanceCountBadge>({filteredInstances.length})</InstanceCountBadge>
           </SelectedInstancesTitle>
-          <RefreshButton onClick={() => dispatch(fetchInstances(authToken, selectedStatus))}>
-            <FaSync /> Refresh
-          </RefreshButton>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <Button
+              variant="text"
+              startIcon={<FaPlus style={{ fontSize: '0.75rem' }} />}
+              onClick={() => setShowCreateModal(true)}
+              sx={{ 
+                fontSize: '0.875rem',
+                padding: '8px 12px',
+                color: '#666',
+                backgroundColor: 'transparent',
+                textTransform: 'none',
+                minWidth: 'auto',
+                height: '32px',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  color: '#333'
+                }
+              }}
+            >
+              New
+            </Button>
+            <RefreshButton onClick={() => dispatch(fetchInstances(authToken, selectedStatus))}>
+              <FaSync /> Refresh
+            </RefreshButton>
+          </div>
         </div>
         <div style={styles.apiKeyControls}>
           <div style={styles.searchBar}>
@@ -325,31 +347,14 @@ const Instances = () => {
   return (
     <PageContainer>
       <ContentContainer>
-        <SectionSpacer />
+        {/* GitHub Integration Section */}
+        <GitHubIntegration />
         
-        <Button
-          variant="contained"
-          startIcon={<FaPlus />}
-          onClick={() => setShowCreateModal(true)}
-          sx={{ 
-            mb: 1,
-            ml: 'auto',
-            mr: 3,
-            display: 'flex',
-            borderRadius: 1,
-            textTransform: 'none',
-            fontSize: '0.875rem',
-            padding: '6px 16px',
-            backgroundColor: '#4CAF50',
-            minWidth: 'auto',
-            height: '36px',
-            '&:hover': {
-              backgroundColor: '#45a049'
-            }
-          }}
-        >
-          Create New Instance
-        </Button>
+        <SectionSpacer />
+
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        
+        {renderSelectedInstances()}
 
         <Modal
           open={showCreateModal}
@@ -361,14 +366,6 @@ const Instances = () => {
             {renderInstanceForm()}
           </ModalContent>
         </Modal>
-        
-        {/* GitHub Integration Section */}
-        <GitHubIntegration />
-        
-        <SectionSpacer />
-
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-        {renderSelectedInstances()}
       </ContentContainer>
     </PageContainer>
   );
