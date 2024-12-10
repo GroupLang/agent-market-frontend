@@ -57,13 +57,6 @@ const GitHubIntegration = () => {
     const blockUTC = blockDate.getTime();
     const nowUTC = now.getTime();
 
-    console.log('UTC Debug:', {
-      createdAt,
-      creationDate: creationDate.toISOString(),
-      blockDate: blockDate.toISOString(),
-      now: now.toISOString()
-    });
-    
     const timeRemaining = blockUTC - nowUTC;
 
     if (timeRemaining <= 0) {
