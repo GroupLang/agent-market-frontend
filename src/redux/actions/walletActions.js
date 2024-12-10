@@ -70,7 +70,7 @@ export const createPaymentAccount = (country) => async (dispatch, getState) => {
 export const fetchWalletBalance = () => async (dispatch, getState) => {
   dispatch(setWalletLoading(true));
   let retries = 0;
-  const maxRetries = 3;
+  const maxRetries = 2;
 
   const attemptFetch = async () => {
     try {

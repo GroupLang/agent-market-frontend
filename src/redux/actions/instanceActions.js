@@ -30,7 +30,7 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 export const fetchInstances = (authToken, status = 0) => async (dispatch) => {
   dispatch({ type: FETCH_INSTANCES_REQUEST });
   let retries = 0;
-  const maxRetries = 3;
+  const maxRetries = 2;
 
   const attemptFetch = async () => {
     try {
@@ -122,7 +122,7 @@ export const fetchInvolvedProviders = (authToken, instance_id) => async (dispatc
 export const fetchRepositoryIssues = (authToken, repoUrl) => async (dispatch) => {
   dispatch({ type: FETCH_REPOSITORY_ISSUES_REQUEST });
   let retries = 0;
-  const maxRetries = 3;
+  const maxRetries = 2;
 
   const attemptFetch = async () => {
     try {

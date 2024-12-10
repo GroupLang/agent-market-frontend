@@ -97,7 +97,7 @@ const startTokenRefreshCycle = (dispatch) => {
 
 export const fetchUserData = () => async (dispatch, getState) => {
   let retries = 0;
-  const maxRetries = 3;
+  const maxRetries = 2;
 
   const attemptFetch = async () => {
     try {

@@ -19,7 +19,11 @@ import {
   IconButton,
   Paper,
   Grid,
-  CircularProgress
+  CircularProgress,
+  Snackbar,
+  Alert,
+  Tooltip,
+  Chip
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -27,15 +31,60 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import MoneyOffIcon from '@mui/icons-material/MoneyOff';
+import TimerIcon from '@mui/icons-material/Timer';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 const GitHubIntegration = () => {
   const dispatch = useDispatch();
   const [repoUrl, setRepoUrl] = useState('');
   const [defaultReward, setDefaultReward] = useState('0.0');
   const [expandedRepos, setExpandedRepos] = useState({});
+  const [openToast, setOpenToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [countdowns, setCountdowns] = useState({});
   
   const { repositories, repositoryIssues, repositoryLoading, repositoryError } = useSelector(state => state.instances);
   const { token: authToken } = useSelector(state => state.auth);
+
+  const calculateTimeRemaining = (createdAt) => {
+    const creationDate = new Date(createdAt);
+    const blockDate = new Date(creationDate.getTime() + 24 * 60 * 60 * 1000); // 1 day after creation
+    const now = new Date();
+    const timeRemaining = blockDate - now;
+
+    if (timeRemaining <= 0) {
+      return { expired: true, timeString: 'Block payment window has ended' };
+    }
+
+    const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+
+    return {
+      expired: false,
+      timeString: `${hours}h ${minutes}m`,
+      hours,
+      minutes,
+      percentage: (timeRemaining / (24 * 60 * 60 * 1000)) * 100
+    };
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const newCountdowns = {};
+      repositories.forEach(repo => {
+        if (repositoryIssues[repo.repo_url]) {
+          repositoryIssues[repo.repo_url].forEach(issue => {
+            if (issue.created_at) {
+              newCountdowns[`${repo.repo_url}-${issue.issue_number}`] = calculateTimeRemaining(issue.created_at);
+            }
+          });
+        }
+      });
+      setCountdowns(newCountdowns);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [repositories, repositoryIssues]);
 
   useEffect(() => {
     if (authToken) {
@@ -50,6 +99,13 @@ const GitHubIntegration = () => {
       });
     }
   }, [dispatch, authToken, repositories]);
+
+  useEffect(() => {
+    if (repositoryError && repositoryError.includes('Insufficient balance')) {
+      setToastMessage('Payment Required: Insufficient balance to add repository');
+      setOpenToast(true);
+    }
+  }, [repositoryError]);
 
   const handleAddRepository = (e) => {
     e.preventDefault();
@@ -80,6 +136,13 @@ const GitHubIntegration = () => {
           console.error('Error blocking issue:', error);
         });
     }
+  };
+
+  const handleCloseToast = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpenToast(false);
   };
 
   return (
@@ -325,14 +388,6 @@ const GitHubIntegration = () => {
         </form>
       </Paper>
 
-      {repositoryError && (
-        <Paper sx={{ p: 2, mb: 3, bgcolor: '#fff3f0', borderRadius: 2 }}>
-          <Typography color="error" sx={{ display: 'flex', alignItems: 'center' }}>
-            Error: {repositoryError}
-          </Typography>
-        </Paper>
-      )}
-
       <List sx={{ 
         bgcolor: 'background.paper', 
         borderRadius: '6px',
@@ -352,8 +407,10 @@ const GitHubIntegration = () => {
                 cursor: 'pointer',
                 borderBottom: '1px solid #d0d7de',
                 display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: { xs: 1, sm: 0 },
                 justifyContent: 'space-between',
-                alignItems: 'center'
+                alignItems: { xs: 'flex-start', sm: 'center' }
               }}
             >
               <ListItemText
@@ -375,8 +432,36 @@ const GitHubIntegration = () => {
                     fontSize: '12px'
                   }
                 }}
+                sx={{
+                  flex: 1,
+                  mr: { xs: 0, sm: 2 }
+                }}
               />
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                width: { xs: '100%', sm: 'auto' },
+                justifyContent: { xs: 'flex-end', sm: 'flex-end' }
+              }}>
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (authToken) {
+                      dispatch(fetchRepositoryIssues(authToken, repo.repo_url));
+                    }
+                  }}
+                  size="small"
+                  sx={{
+                    color: '#57606a',
+                    '&:hover': {
+                      backgroundColor: '#f6f8fa',
+                      color: '#24292f'
+                    }
+                  }}
+                >
+                  <RefreshIcon fontSize="small" />
+                </IconButton>
                 <IconButton
                   onClick={(e) => {
                     e.stopPropagation();
@@ -386,7 +471,8 @@ const GitHubIntegration = () => {
                   sx={{
                     color: '#57606a',
                     '&:hover': {
-                      backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                      backgroundColor: '#f6f8fa',
+                      color: '#24292f'
                     }
                   }}
                 >
@@ -424,9 +510,11 @@ const GitHubIntegration = () => {
                   .map((issue) => (
                     <ListItem key={issue.issue_number} sx={{ 
                       display: 'flex',
-                      alignItems: 'center',
+                      alignItems: 'flex-start',
                       py: 1,
-                      borderBottom: '1px solid #eaecef'
+                      borderBottom: '1px solid #eaecef',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      gap: { xs: 1, sm: 0 }
                     }}>
                       <ListItemText
                         primary={
@@ -439,34 +527,107 @@ const GitHubIntegration = () => {
                           </Typography>
                         }
                         secondary={
-                          <Typography variant="caption" sx={{ color: '#57606a' }}>
-                            Status: {parseInt(issue.status) === 8 ? 'Payment Required' : 
-                                    parseInt(issue.status) === 9 ? 'Payment Blocked' :
-                                    parseInt(issue.status) === 0 ? 'Open' : 
-                                    issue.status || 'Open'} | 
-                            Reward: {issue.default_reward ? `$${issue.default_reward}` : `$${repo.default_reward}`} |
-                            {issue.instance_id ? ` Instance ID: ${issue.instance_id}` : ' No Instance'}
-                          </Typography>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 1,
+                            mt: 0.5,
+                            flexWrap: 'wrap'
+                          }}>
+                            <Typography variant="caption" sx={{ color: '#57606a' }}>
+                              Issue Status: {parseInt(issue.status) === 8 ? 'Payment Required' : 
+                                      parseInt(issue.status) === 9 ? 'Payment Blocked' :
+                                      parseInt(issue.status) === 0 ? 'Open' : 
+                                      issue.status || 'Open'} | 
+                              Reward: {issue.default_reward ? `$${issue.default_reward}` : `$${repo.default_reward}`} |
+                              {issue.instance_id ? ` Instance ID: ${issue.instance_id}` : ' No Instance'}
+                            </Typography>
+                          </Box>
                         }
+                        sx={{
+                          flex: 1,
+                          mr: { xs: 0, sm: 2 }
+                        }}
                       />
-                      {parseInt(issue.status) !== 8 && parseInt(issue.status) !== 9 && (
-                        <ListItemSecondaryAction>
-                          <IconButton
-                            edge="end"
-                            aria-label="block payment"
+                      {parseInt(issue.status) !== 8 && parseInt(issue.status) !== 9 && !countdowns[`${repo.repo_url}-${issue.issue_number}`]?.expired && (
+                        <Box 
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 2,
+                            width: { xs: '100%', sm: 'auto' },
+                            justifyContent: { xs: 'flex-end', sm: 'flex-end' },
+                            mt: { xs: 1, sm: 0 },
+                            position: { sm: 'absolute' },
+                            right: { sm: 16 },
+                            top: { sm: '50%' },
+                            transform: { sm: 'translateY(-50%)' }
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2.5 }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: '#57606a',
+                                fontSize: '11px',
+                                fontWeight: 500,
+                                lineHeight: 1,
+                                ml: '4px',
+                                mb: '-15px'
+                              }}
+                            >
+                              Time window to block
+                            </Typography>
+                            <Chip
+                              label={countdowns[`${repo.repo_url}-${issue.issue_number}`]?.timeString}
+                              size="small"
+                              sx={{
+                                backgroundColor: '#f6f8fa',
+                                border: '1px solid #d0d7de',
+                                color: '#24292f',
+                                fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"',
+                                fontSize: '12px',
+                                height: '24px',
+                                mb: '18px',
+                                ml: '17px',
+                                '& .MuiChip-label': {
+                                  px: 1,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.5,
+                                  lineHeight: 1,
+                                }
+                              }}
+                              icon={<TimerIcon style={{ fontSize: 14, color: '#57606a' }} />}
+                            />
+                          </Box>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<MoneyOffIcon />}
                             onClick={() => handleBlockIssue(repo.repo_url, issue.issue_number)}
                             disabled={issue.payment_blocked}
                             sx={{
-                              color: issue.payment_blocked ? '#8c959f' : '#cf222e',
+                              borderColor: '#d0d7de',
+                              color: '#24292f',
+                              textTransform: 'none',
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"',
+                              minWidth: { xs: '120px', sm: 'auto' },
                               '&:hover': {
-                                backgroundColor: 'rgba(207, 34, 46, 0.1)'
+                                backgroundColor: '#f6f8fa',
+                                borderColor: '#24292f'
+                              },
+                              '&:disabled': {
+                                borderColor: '#d0d7de',
+                                color: '#8c959f'
                               }
                             }}
-                            title="Block Payment"
                           >
-                            <MoneyOffIcon />
-                          </IconButton>
-                        </ListItemSecondaryAction>
+                            Block Payment
+                          </Button>
+                        </Box>
                       )}
                     </ListItem>
                   ))}
@@ -475,6 +636,16 @@ const GitHubIntegration = () => {
           </React.Fragment>
         ))}
       </List>
+      <Snackbar 
+        open={openToast} 
+        autoHideDuration={6000} 
+        onClose={handleCloseToast}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseToast} severity="error" sx={{ width: '100%' }}>
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
