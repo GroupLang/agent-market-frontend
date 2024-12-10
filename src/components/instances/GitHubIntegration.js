@@ -3,7 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   addRepository,
   fetchRepositories,
-  removeRepository
+  removeRepository,
+  fetchRepositoryIssues
 } from '../../redux/actions/instanceActions';
 import {
   Box,
@@ -39,6 +40,14 @@ const GitHubIntegration = () => {
       dispatch(fetchRepositories(authToken));
     }
   }, [dispatch, authToken]);
+
+  useEffect(() => {
+    if (authToken && repositories.length > 0) {
+      repositories.forEach(repo => {
+        dispatch(fetchRepositoryIssues(authToken, repo.repo_url));
+      });
+    }
+  }, [dispatch, authToken, repositories]);
 
   const handleAddRepository = (e) => {
     e.preventDefault();
@@ -186,7 +195,7 @@ const GitHubIntegration = () => {
                 label="Repository URL"
                 value={repoUrl}
                 onChange={(e) => setRepoUrl(e.target.value)}
-                placeholder="owner/repository"
+                placeholder="repository"
                 required
                 variant="outlined"
                 size="small"
