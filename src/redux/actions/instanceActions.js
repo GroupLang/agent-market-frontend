@@ -21,6 +21,9 @@ export const REMOVE_REPOSITORY_FAILURE = 'REMOVE_REPOSITORY_FAILURE';
 export const FETCH_REPOSITORY_ISSUES_REQUEST = 'FETCH_REPOSITORY_ISSUES_REQUEST';
 export const FETCH_REPOSITORY_ISSUES_SUCCESS = 'FETCH_REPOSITORY_ISSUES_SUCCESS';
 export const FETCH_REPOSITORY_ISSUES_FAILURE = 'FETCH_REPOSITORY_ISSUES_FAILURE';
+export const BLOCK_ISSUE_REQUEST = 'BLOCK_ISSUE_REQUEST';
+export const BLOCK_ISSUE_SUCCESS = 'BLOCK_ISSUE_SUCCESS';
+export const BLOCK_ISSUE_FAILURE = 'BLOCK_ISSUE_FAILURE';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -118,30 +121,44 @@ export const fetchInvolvedProviders = (authToken, instance_id) => async (dispatc
 
 export const fetchRepositoryIssues = (authToken, repoUrl) => async (dispatch) => {
   dispatch({ type: FETCH_REPOSITORY_ISSUES_REQUEST });
-  try {
-    const url = new URL('https://api.agent.market/v1/github/repositories/issues');
-    url.searchParams.append('repo_url', repoUrl);
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${authToken}`
+  let retries = 0;
+  const maxRetries = 3;
+
+  const attemptFetch = async () => {
+    try {
+      const url = new URL('https://api.agent.market/v1/github/repositories/issues');
+      url.searchParams.append('repo_url', repoUrl);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch repository issues: ${response.statusText}`);
       }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch repository issues: ${response.statusText}`);
+
+      const data = await response.json();
+      console.log('Fetched issues:', data);
+      dispatch({ type: FETCH_REPOSITORY_ISSUES_SUCCESS, payload: { repoUrl, issues: data } });
+      return data;
+    } catch (error) {
+      console.log('Error fetching repository issues:', error);
+      if (retries < maxRetries) {
+        retries++;
+        const backoffDelay = Math.min(1000 * Math.pow(2, retries), 10000);
+        console.log(`Retrying fetchRepositoryIssues in ${backoffDelay}ms...`);
+        await delay(backoffDelay);
+        return attemptFetch();
+      }
+      dispatch({ type: FETCH_REPOSITORY_ISSUES_FAILURE, payload: error.message });
+      throw error;
     }
-    
-    const data = await response.json();
-    console.log('Fetched issues:', data);
-    dispatch({ type: FETCH_REPOSITORY_ISSUES_SUCCESS, payload: { repoUrl, issues: data } });
-    return data;
-  } catch (error) {
-    console.log('Error fetching repository issues:', error);
-    dispatch({ type: FETCH_REPOSITORY_ISSUES_FAILURE, payload: error.message });
-    throw error;
-  }
+  };
+
+  return attemptFetch();
 };
 
 export const addRepository = (authToken, repoUrl, defaultReward) => async (dispatch) => {
@@ -241,5 +258,37 @@ export const removeRepository = (authToken, repoUrl) => async (dispatch) => {
     console.error('Error in removeRepository:', error);
     dispatch({ type: REMOVE_REPOSITORY_FAILURE, payload: error.message });
     toast.error('Failed to remove repository');
+  }
+};
+
+export const blockIssue = (authToken, repoUrl, issueNumber) => async (dispatch) => {
+  dispatch({ type: BLOCK_ISSUE_REQUEST });
+  try {
+    const url = new URL('https://api.agent.market/v1/github/repositories/issues/block');
+    url.searchParams.append('repo_url', repoUrl);
+    url.searchParams.append('issue_number', issueNumber.toString());
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Block issue error:', errorText);
+      throw new Error('Failed to block issue');
+    }
+
+    const data = await response.json();
+    dispatch({ type: BLOCK_ISSUE_SUCCESS, payload: { repoUrl, issueNumber } });
+    toast.success('Issue payment blocked successfully!');
+    return data;
+  } catch (error) {
+    console.error('Error blocking issue:', error);
+    dispatch({ type: BLOCK_ISSUE_FAILURE, payload: error.message });
+    toast.error('Failed to block issue payment');
+    throw error;
   }
 };

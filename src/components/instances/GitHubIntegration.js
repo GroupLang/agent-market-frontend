@@ -4,7 +4,8 @@ import {
   addRepository,
   fetchRepositories,
   removeRepository,
-  fetchRepositoryIssues
+  fetchRepositoryIssues,
+  blockIssue
 } from '../../redux/actions/instanceActions';
 import {
   Box,
@@ -25,6 +26,7 @@ import AddIcon from '@mui/icons-material/Add';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 
 const GitHubIntegration = () => {
   const dispatch = useDispatch();
@@ -69,6 +71,15 @@ const GitHubIntegration = () => {
       ...prev,
       [repoUrl]: !prev[repoUrl]
     }));
+  };
+
+  const handleBlockIssue = (repoUrl, issueNumber) => {
+    if (authToken) {
+      dispatch(blockIssue(authToken, repoUrl, issueNumber))
+        .catch(error => {
+          console.error('Error blocking issue:', error);
+        });
+    }
   };
 
   return (
@@ -339,7 +350,10 @@ const GitHubIntegration = () => {
                 },
                 py: 2,
                 cursor: 'pointer',
-                borderBottom: '1px solid #d0d7de'
+                borderBottom: '1px solid #d0d7de',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
               }}
             >
               <ListItemText
@@ -362,14 +376,17 @@ const GitHubIntegration = () => {
                   }
                 }}
               />
-              <ListItemSecondaryAction sx={{ display: 'flex', gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleRepoExpansion(repo.repo_url);
+                  }}
                   size="small"
                   sx={{
-                    mr: 1,
                     color: '#57606a',
                     '&:hover': {
-                      backgroundColor: '#f6f8fa'
+                      backgroundColor: 'rgba(0, 0, 0, 0.04)'
                     }
                   }}
                 >
@@ -394,62 +411,67 @@ const GitHubIntegration = () => {
                 >
                   <DeleteIcon />
                 </IconButton>
-              </ListItemSecondaryAction>
+              </Box>
             </ListItem>
             
-            {expandedRepos[repo.repo_url] && repositoryIssues[repo.repo_url]?.map((issue) => (
-              <ListItem
-                key={issue.id}
-                sx={{
-                  pl: 6,
-                  py: 1.5,
-                  borderLeft: '1px solid #d0d7de',
-                  borderBottom: '1px solid #d0d7de',
-                  bgcolor: '#f6f8fa'
-                }}
-              >
-                <ListItemText
-                  primary={`#${issue.issue_number}: ${issue.title}`}
-                  secondary={
-                    <React.Fragment>
-                      <Typography 
-                        component="span" 
-                        variant="body2" 
-                        sx={{
-                          color: '#57606a',
-                          fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"',
-                          fontSize: '12px'
-                        }}
-                      >
-                        Status: open
-                      </Typography>
-                      {issue.instance_id && (
-                        <Typography 
-                          component="span" 
-                          variant="body2" 
-                          sx={{
-                            ml: 2,
-                            color: '#57606a',
-                            fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"',
-                            fontSize: '12px'
-                          }}
-                        >
-                          Instance ID: {issue.instance_id}
-                        </Typography>
+            {expandedRepos[repo.repo_url] && repositoryIssues[repo.repo_url] && (
+              <List sx={{ pl: 4 }}>
+                {repositoryIssues[repo.repo_url]
+                  .filter(issue => {
+                    const status = parseInt(issue.status);
+                    return status === 0 || status === 8 || status === 9;
+                  })
+                  .map((issue) => (
+                    <ListItem key={issue.issue_number} sx={{ 
+                      display: 'flex',
+                      alignItems: 'center',
+                      py: 1,
+                      borderBottom: '1px solid #eaecef'
+                    }}>
+                      <ListItemText
+                        primary={
+                          <Typography variant="body2" sx={{ 
+                            color: '#24292f',
+                            fontWeight: issue.payment_blocked ? 500 : 400,
+                            textDecoration: issue.payment_blocked ? 'line-through' : 'none'
+                          }}>
+                            #{issue.issue_number} - {issue.title}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography variant="caption" sx={{ color: '#57606a' }}>
+                            Status: {parseInt(issue.status) === 8 ? 'Payment Required' : 
+                                    parseInt(issue.status) === 9 ? 'Payment Blocked' :
+                                    parseInt(issue.status) === 0 ? 'Open' : 
+                                    issue.status || 'Open'} | 
+                            Reward: {issue.default_reward ? `$${issue.default_reward}` : `$${repo.default_reward}`} |
+                            {issue.instance_id ? ` Instance ID: ${issue.instance_id}` : ' No Instance'}
+                          </Typography>
+                        }
+                      />
+                      {parseInt(issue.status) !== 8 && parseInt(issue.status) !== 9 && (
+                        <ListItemSecondaryAction>
+                          <IconButton
+                            edge="end"
+                            aria-label="block payment"
+                            onClick={() => handleBlockIssue(repo.repo_url, issue.issue_number)}
+                            disabled={issue.payment_blocked}
+                            sx={{
+                              color: issue.payment_blocked ? '#8c959f' : '#cf222e',
+                              '&:hover': {
+                                backgroundColor: 'rgba(207, 34, 46, 0.1)'
+                              }
+                            }}
+                            title="Block Payment"
+                          >
+                            <MoneyOffIcon />
+                          </IconButton>
+                        </ListItemSecondaryAction>
                       )}
-                    </React.Fragment>
-                  }
-                  primaryTypographyProps={{
-                    sx: { 
-                      color: '#24292f',
-                      fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"',
-                      fontSize: '14px',
-                      fontWeight: 500
-                    }
-                  }}
-                />
-              </ListItem>
-            ))}
+                    </ListItem>
+                  ))}
+              </List>
+            )}
           </React.Fragment>
         ))}
       </List>

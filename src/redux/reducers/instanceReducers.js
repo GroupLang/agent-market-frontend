@@ -16,7 +16,10 @@ import {
   REMOVE_REPOSITORY_FAILURE,
   FETCH_REPOSITORY_ISSUES_REQUEST,
   FETCH_REPOSITORY_ISSUES_SUCCESS,
-  FETCH_REPOSITORY_ISSUES_FAILURE
+  FETCH_REPOSITORY_ISSUES_FAILURE,
+  BLOCK_ISSUE_REQUEST,
+  BLOCK_ISSUE_SUCCESS,
+  BLOCK_ISSUE_FAILURE
 } from '../actions/instanceActions';
 
 const initialState = {
@@ -27,7 +30,8 @@ const initialState = {
   error: null,
   creatingInstance: false,
   repositoryLoading: false,
-  repositoryError: null
+  repositoryError: null,
+  blockingIssue: false
 };
 
 const instanceReducer = (state = initialState, action) => {
@@ -89,6 +93,23 @@ const instanceReducer = (state = initialState, action) => {
         repositoryLoading: false,
         repositoryError: action.payload
       };
+    case BLOCK_ISSUE_REQUEST:
+      return { ...state, blockingIssue: true };
+    case BLOCK_ISSUE_SUCCESS:
+      return {
+        ...state,
+        blockingIssue: false,
+        repositoryIssues: {
+          ...state.repositoryIssues,
+          [action.payload.repoUrl]: state.repositoryIssues[action.payload.repoUrl].map(issue => 
+            issue.number === action.payload.issueNumber 
+              ? { ...issue, payment_blocked: true }
+              : issue
+          )
+        }
+      };
+    case BLOCK_ISSUE_FAILURE:
+      return { ...state, blockingIssue: false, error: action.payload };
     default:
       return state;
   }
