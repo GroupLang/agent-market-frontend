@@ -451,3 +451,138 @@ export const PaymentCard = styled.div`
     margin: 0;
   }
 `;
+
+// GitHub Integration Section
+export const GitHubSection = styled.div`
+  margin: 40px 0;
+  padding: 30px;
+  background: ${colors.white};
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid ${colors.background};
+
+    svg {
+      font-size: 32px;
+      color: ${colors.text};
+    }
+
+    h3 {
+      color: ${colors.text};
+      font-size: 1.5rem;
+      margin: 0;
+    }
+  }
+`;
+
+export const GitHubFeatures = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin: 30px 0;
+`;
+
+export const GitHubFeature = styled.div`
+  padding: 24px;
+  background: ${colors.background};
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+
+  h4 {
+    color: ${colors.primary};
+    margin: 0 0 12px 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    svg {
+      font-size: 20px;
+    }
+  }
+
+  p {
+    color: ${colors.lightText};
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+`;
+
+export const GitHubStats = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin: 30px 0;
+  justify-content: center;
+`;
+
+export const GitHubStat = styled.div`
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+  padding: 20px;
+  background: ${colors.white};
+  border: 1px solid ${colors.background};
+  border-radius: 8px;
+  text-align: center;
+
+  .value {
+    color: ${colors.primary};
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+
+  .label {
+    color: ${colors.lightText};
+    font-size: 0.9rem;
+  }
+`;
+
+export const GitHubCTA = styled.div`
+  text-align: center;
+  margin-top: 40px;
+  padding: 30px;
+  background: ${colors.background};
+  border-radius: 8px;
+
+  h4 {
+    color: ${colors.text};
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+  }
+
+  p {
+    color: ${colors.lightText};
+    margin-bottom: 24px;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  button {
+    padding: 12px 24px;
+    background-color: ${colors.primary};
+    color: ${colors.white};
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: ${colors.primaryDark};
+    }
+  }
+`;

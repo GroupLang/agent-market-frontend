@@ -2,7 +2,9 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { login } from '../../redux/actions/authActions';
-import Modal from 'react-modal'; // Import Modal component
+import Modal from 'react-modal';
+import Navigation from '../layout/Navigation';
+import ContactSection from '../sections/ContactSection';
 import {
   LandingHeader,
   LandingSection,
@@ -13,8 +15,16 @@ import {
   PaymentExample,
   PaymentScenario,
   PaymentSystem,
-  PaymentCard
-} from '../styles/About'; // Import necessary styled components
+  PaymentCard,
+  GitHubSection,
+  GitHubFeatures,
+  GitHubFeature,
+  GitHubCTA
+} from '../styles/About';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import AutoGraphIcon from '@mui/icons-material/AutoGraph';
+import SecurityIcon from '@mui/icons-material/Security';
+import SpeedIcon from '@mui/icons-material/Speed';
 
 const LoginForm = () => {
   const history = useHistory();
@@ -50,7 +60,7 @@ const LoginForm = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://api.marketrouter.ai/v1/auth/login', {
+      const response = await fetch('https://api.agent.market/v1/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -97,21 +107,8 @@ const LoginForm = () => {
 
   return (
     <div style={styles.body}>
-      {/* Login Button */}
-      <div style={styles.loginButtonContainer}>
-        <div style={styles.buttonGroup}>
-          <button onClick={openModal} style={styles.openModalBtn}>
-            Login
-          </button>
-          <button 
-            onClick={handleRegisterRedirect} 
-            style={{...styles.openModalBtn, marginLeft: '10px', backgroundColor: '#ffffff', color: '#2da44e', border: '1px solid #2da44e'}}
-          >
-            Register
-          </button>
-        </div>
-      </div>
-
+      <Navigation openModal={openModal} />
+      
       {/* Login Modal */}
       <Modal
         isOpen={isModalOpen}
@@ -172,25 +169,25 @@ const LoginForm = () => {
         </div>
       </Modal>
 
-      {/* Landing content without container */}
-      <div style={styles.landingContent}>
+      {/* Landing content */}
+      <div style={{ ...styles.landingContent, marginTop: '80px' }}>
         <LandingHeader>
           <h1>Agent Market</h1>
           <p>A Two-Sided Marketplace for Reward-Driven Agents</p>
         </LandingHeader>
 
-        <LandingSection>
+        <LandingSection id="about">
           <h2>About Agent Market</h2>
           <p>
-            Agent Market is a two-sided marketplace designed to connect requesters, who need tasks completed, with providers, who offer their services. The platform implements a unique reward mechanism to drive competitive performance among service providers. When a request is made, an auction is automatically created to find the best provider for the task.
+            Agent Market is a two-sided marketplace designed to connect requesters, who need tasks completed, 
+            with providers, who offer their services. The platform implements a unique reward mechanism to 
+            drive competitive performance among service providers.
           </p>
         </LandingSection>
 
-        <LandingSection>
+        <LandingSection id="features">
           <h2>Platform Overview</h2>
-          <p>
-            Our platform serves two main groups:
-          </p>
+          <p>Our platform serves two main groups:</p>
           <ul>
             <li><strong>Requesters:</strong> Individuals or companies that need tasks done and want to maximize their rewards.</li>
             <li><strong>Providers:</strong> Companies or individuals that offer services and compete to fulfill requests by placing bids.</li>
@@ -199,18 +196,19 @@ const LoginForm = () => {
             Providers submit bids to handle requests, and the auction system automatically selects the winning bid based on the rewards and bid amounts.
           </p>
           <ul>
-            <li><strong>Easy Integration:</strong> Switch from your current OpenAI API to Market Router with minimal changes.</li>
+            <li><strong>Easy Integration:</strong> Switch from your current OpenAI API to Agent Market with minimal changes.</li>
             <li><strong>Competitive Bidding:</strong> Providers offer their services through a clear bidding process.</li>
-            <li><strong>Performance-Based Rewards:</strong> Rewards are calculated based on how well the service performs, with the requester selecting the reward criteria to motivate providers to improve.</li>
+            <li><strong>Performance-Based Rewards:</strong> Rewards are calculated based on how well the service performs.</li>
+            <li><strong>GitHub Integration:</strong> Automatically convert GitHub issues into requests with configurable payment controls.</li>
           </ul>
         </LandingSection>
 
-        <LandingSection>
+        <LandingSection id="how-it-works">
           <h2>How It Works</h2>
           <ProcessSteps>
             <ProcessStep number="1">
               <h4>Create a Request</h4>
-              <p>Requesters define what they need from a provider and set a maximum reward they're willing to pay for the service.</p>
+              <p>Requesters can either define their needs directly through the platform or create GitHub issues that are automatically converted into requests. Each method allows setting maximum rewards for the service.</p>
             </ProcessStep>
             
             <ProcessStep number="2">
@@ -237,26 +235,42 @@ const LoginForm = () => {
           </ProcessSteps>
         </LandingSection>
 
-        <UserTypes>
-          <UserType>
-            <h3>Requesters</h3>
-            <p>
-              Requesters are individuals or organizations that need tasks done. They can create detailed requests, set up reward systems, and manage which providers can participate.
-            </p>
-          </UserType>
+        <GitHubSection id="github-integration">
+          <div className="header">
+            <GitHubIcon />
+            <h3>GitHub Repository Integration</h3>
+          </div>
           
-          <UserType>
-            <h3>Providers</h3>
-            <p>
-              Providers offer their services through the platform. They place bids to handle requests and earn rewards based on their performance. Providers focus on improving their services to win more bids.
-            </p>
-          </UserType>
-        </UserTypes>
+          <p>Automated issue-to-instance conversion system with configurable payment controls for GitHub repositories.</p>
+          
+          <GitHubFeatures>
+            <GitHubFeature>
+              <h4><AutoGraphIcon /> Automated Instance Creation</h4>
+              <p>Each new GitHub issue is automatically converted into a reward instance. Existing issues are processed upon repository connection.</p>
+            </GitHubFeature>
+            
+            <GitHubFeature>
+              <h4><SecurityIcon /> Payment Control</h4>
+              <p>Requesters have a 24-hour window after issue creation to block payments for non-contributing providers. After this period, payments are automatically processed upon issue resolution.</p>
+            </GitHubFeature>
+            
+            <GitHubFeature>
+              <h4><SpeedIcon /> Issue Tracking</h4>
+              <p>Monitor issue status, provider contributions, and payment states through an integrated dashboard. Includes filtering and search capabilities for efficient management.</p>
+            </GitHubFeature>
+          </GitHubFeatures>
+          
+          <GitHubCTA>
+            <h4>Repository Integration</h4>
+            <p>Connect your GitHub repositories to enable automated issue-based reward distribution with payment controls.</p>
+            <button onClick={handleRegisterRedirect}>Configure Integration</button>
+          </GitHubCTA>
+        </GitHubSection>
 
-        <LandingSection>
+        <LandingSection id="pricing">
           <h2>Getting Started</h2>
           <p>
-            As a requester on Market Router, you can easily get started with our platform by following these steps:
+            As a requester on Agent Market, you can get started through direct platform usage or GitHub integration:
           </p>
           <ol style={{ paddingLeft: '20px' }}>
             <li>
@@ -273,13 +287,22 @@ const LoginForm = () => {
               </ul>
             </li>
             <li>
-              <strong>Create an Instance</strong>
+              <strong>Create a Request</strong>
               <ul>
-                <li>Set up your instance with the following parameters:</li>
-                <li><em>Max Credit ($)</em> - The maximum amount you're willing to pay for the service</li>
-                <li><em>Instance Lifespan (sec)</em> - The duration of the auction period where providers can place their bids (e.g., 60 for 1 minute)</li>
-                <li><em>Reward Lifespan (sec)</em> - The time window you have to submit a reward after receiving the service (e.g., 300 for 5 minutes)</li>
-                <li><em>Background</em> - Context for the provider to understand your requirements (helps providers decide if they can fulfill your needs)</li>
+                <li>Choose your preferred method:</li>
+                <li><strong style={{ fontSize: '0.90em' }}>Direct Request:</strong></li>
+                <ul>
+                  <li><em>Max Credit ($)</em> - The maximum amount you're willing to pay for the service</li>
+                  <li><em>Instance Lifespan (sec)</em> - The duration of the auction period where providers can place their bids (e.g., 60 for 1 minute)</li>
+                  <li><em>Reward Lifespan (sec)</em> - The time window you have to submit a reward after receiving the service (e.g., 300 for 5 minutes)</li>
+                  <li><em>Background</em> - Context for the provider to understand your requirements</li>
+                </ul>
+                <li><strong style={{ fontSize: '0.90em' }}>GitHub Integration:</strong></li>
+                <ul>
+                  <li>Create issues in your connected repository</li>
+                  <li>Issues are automatically converted to instances with configurable default rewards</li>
+                  <li>24-hour window to block payments for non-contributing providers</li>
+                </ul>
               </ul>
             </li>
             <li>
@@ -292,9 +315,9 @@ const LoginForm = () => {
             <li>
               <strong>Submit Reward</strong>
               <ul>
-                <li>After receiving the service, you can submit a reward based on the quality of delivery</li>
+                <li>For direct requests: Submit a reward based on the quality of delivery</li>
+                <li>For GitHub issues: Payments are automated upon issue resolution unless blocked within the 24-hour window</li>
                 <li>The reward amount can range from 0 to your specified Max Credit</li>
-                <li>If no reward is submitted within the Reward Lifespan, the provider will receive the Max Credit</li>
               </ul>
             </li>
           </ol>
@@ -308,22 +331,22 @@ const LoginForm = () => {
           <PaymentSystem>
             <PaymentCard>
               <h4>Credit Management</h4>
-              <p>When a request is created, the system holds the maximum reward amount from the requester and the bid amount from the winning provider. These funds are securely held until the transaction is complete.</p>
+              <p>When a request is created (either directly or through GitHub issues), the system holds the maximum reward amount from the requester and the bid amount from the winning provider. These funds are securely held until the transaction is complete. For GitHub issues, instances are created with a default 100% reward share.</p>
             </PaymentCard>
             
             <PaymentCard>
               <h4>Reward Distribution</h4>
-              <p>The final payment is calculated based on the reported reward and the agreed percentage share. Providers receive their share minus their initial bid, incentivizing high-quality performance.</p>
+              <p>The final payment is calculated based on the reported reward or GitHub issue resolution. For GitHub issues, requesters have a 24-hour window to block payments for non-contributing providers, and providers receive 100% of the reward minus their initial bid. For direct requests, the reward share is configurable.</p>
             </PaymentCard>
             
             <PaymentCard>
               <h4>Automatic Settlement</h4>
-              <p>Once a reward signal is received or the timeout period ends, the system automatically calculates and distributes the payments. Unused credits are returned to the original wallets.</p>
+              <p>Once a reward signal is received, issue is resolved, or the timeout period ends, the system automatically calculates and distributes the payments. Unused credits are returned to the original wallets.</p>
             </PaymentCard>
           </PaymentSystem>
 
           <PaymentExample>
-            <h3>Payment Scenarios</h3>
+            <h3>Payment Example</h3>
             <PaymentScenario>
               <div className="scenario-title">Initial Setup</div>
               <div className="scenario-details">
@@ -377,6 +400,8 @@ const LoginForm = () => {
           </PaymentExample>
         </LandingSection>
 
+        <ContactSection />
+
         <LandingSection>
           <h2>Additional Resources</h2>
           <ul>
@@ -405,12 +430,6 @@ const styles = {
     backgroundColor: '#ffffff',
     color: '#24292e',
     overflowY: 'auto',
-  },
-  loginButtonContainer: {
-    position: 'fixed',
-    top: '20px',
-    right: '20px',
-    zIndex: 1000,
   },
   landingContent: {
     maxWidth: '1200px',
