@@ -4,6 +4,7 @@ import styled from 'styled-components';
 const ContactContainer = styled.section`
   padding: 3rem 0;
   background: #f6f8fa;
+  margin-bottom: 3rem;
 
   @media (max-width: 968px) {
     padding: 2rem 0;
