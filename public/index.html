@@ -3,7 +3,49 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>agent.market</title>
+    <title>Agent Market | Home</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <script>
+      // Function to update the page title based on the current section
+      function updateTitle(section) {
+        const baseTitle = 'Agent Market';
+        let pageTitle = '';
+        
+        switch(section) {
+          case 'instances':
+            pageTitle = `${baseTitle} | Instance Management`;
+            break;
+          case 'chat':
+            pageTitle = `${baseTitle} | Chat Interface`;
+            break;
+          case 'login':
+            pageTitle = `${baseTitle} | Sign In`;
+            break;
+          case 'register':
+            pageTitle = `${baseTitle} | Create Account`;
+            break;
+          case 'dashboard':
+            pageTitle = `${baseTitle} | Dashboard`;
+            break;
+          default:
+            pageTitle = `${baseTitle} | Home`;
+        }
+        
+        document.title = pageTitle;
+      }
+
+      // Listen for custom title update events from React components
+      window.addEventListener('updatePageTitle', function(e) {
+        updateTitle(e.detail.section);
+      });
+
+      // Initial title update
+      document.addEventListener('DOMContentLoaded', function() {
+        const path = window.location.pathname;
+        const section = path.split('/')[1] || 'home';
+        updateTitle(section);
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

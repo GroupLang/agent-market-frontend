@@ -40,6 +40,14 @@ const ChatSection = () => {
   const messageListRef = useRef(null);
 
   useEffect(() => {
+    // Update page title when component mounts
+    const event = new CustomEvent('updatePageTitle', {
+      detail: { section: 'chat' }
+    });
+    window.dispatchEvent(event);
+  }, []);
+
+  useEffect(() => {
     dispatch(fetchConversations(authToken));
   }, [dispatch, authToken]);
 

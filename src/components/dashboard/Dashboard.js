@@ -274,6 +274,15 @@ const Dashboard = () => {
 
   const totalPages = Math.max(1, Math.ceil(sortedAndFilteredKeys.length / itemsPerPage));
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    // Dispatch custom event to update page title
+    const event = new CustomEvent('updatePageTitle', {
+      detail: { section: tab }
+    });
+    window.dispatchEvent(event);
+  };
+
   if (loading) {
     return <LoadingContainer>Loading...</LoadingContainer>;
   }
@@ -287,7 +296,7 @@ const Dashboard = () => {
             <TabButton
               key={tab}
               $active={activeTab === tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => handleTabChange(tab)}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </TabButton>

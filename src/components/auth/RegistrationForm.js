@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 
 const RegistrationForm = () => {
@@ -10,6 +10,14 @@ const RegistrationForm = () => {
   });
   const [isRegistered, setIsRegistered] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    // Update page title when component mounts
+    const event = new CustomEvent('updatePageTitle', {
+      detail: { section: 'register' }
+    });
+    window.dispatchEvent(event);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

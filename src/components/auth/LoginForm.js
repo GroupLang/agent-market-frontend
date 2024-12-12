@@ -45,6 +45,14 @@ const LoginForm = () => {
     };
   }, []);
 
+  useEffect(() => {
+    // Update page title when component mounts
+    const event = new CustomEvent('updatePageTitle', {
+      detail: { section: 'login' }
+    });
+    window.dispatchEvent(event);
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevState => ({

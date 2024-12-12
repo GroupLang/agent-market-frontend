@@ -57,6 +57,14 @@ const Instances = () => {
   });
 
   useEffect(() => {
+    // Update page title when component mounts
+    const event = new CustomEvent('updatePageTitle', {
+      detail: { section: 'instances' }
+    });
+    window.dispatchEvent(event);
+  }, []);
+
+  useEffect(() => {
     dispatch(fetchInstances(authToken));
   }, [dispatch, authToken]);
 
