@@ -42,8 +42,9 @@ const GitHubIntegration = () => {
   const [openToast, setOpenToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [countdowns, setCountdowns] = useState({});
+  const [blockingIssues, setBlockingIssues] = useState({});
   
-  const { repositories, repositoryIssues, repositoryLoading, repositoryError, blockingIssue } = useSelector(state => state.instances);
+  const { repositories, repositoryIssues, repositoryLoading, repositoryError } = useSelector(state => state.instances);
   const { token: authToken } = useSelector(state => state.auth);
 
   const calculateTimeRemaining = (createdAt) => {
@@ -138,7 +139,18 @@ const GitHubIntegration = () => {
 
   const handleBlockIssue = (repoUrl, issueNumber) => {
     if (authToken) {
+      setBlockingIssues(prev => ({
+        ...prev,
+        [`${repoUrl}-${issueNumber}`]: true
+      }));
+
       dispatch(blockIssue(authToken, repoUrl, issueNumber))
+        .finally(() => {
+          setBlockingIssues(prev => ({
+            ...prev,
+            [`${repoUrl}-${issueNumber}`]: false
+          }));
+        })
         .catch(error => {
           console.error('Error blocking issue:', error);
           if (error.response && error.response.status === 400) {
@@ -615,9 +627,9 @@ const GitHubIntegration = () => {
                           <Button
                             variant="outlined"
                             size="small"
-                            startIcon={blockingIssue ? <CircularProgress size={16} /> : <MoneyOffIcon />}
+                            startIcon={blockingIssues[`${repo.repo_url}-${issue.issue_number}`] ? <CircularProgress size={16} /> : <MoneyOffIcon />}
                             onClick={() => handleBlockIssue(repo.repo_url, issue.issue_number)}
-                            disabled={issue.payment_blocked || blockingIssue}
+                            disabled={issue.payment_blocked || blockingIssues[`${repo.repo_url}-${issue.issue_number}`]}
                             sx={{
                               borderColor: '#d0d7de',
                               color: '#24292f',
@@ -636,7 +648,7 @@ const GitHubIntegration = () => {
                               }
                             }}
                           >
-                            {blockingIssue ? 'Blocking...' : 'Block Payment'}
+                            {blockingIssues[`${repo.repo_url}-${issue.issue_number}`] ? 'Blocking...' : 'Block Payment'}
                           </Button>
                         </Box>
                       )}
