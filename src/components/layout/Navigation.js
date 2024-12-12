@@ -108,12 +108,12 @@ const NavLink = styled.a`
   }
 
   &.docs-link {
-    background: ${props => props.$active ? 'rgba(45, 164, 78, 0.1)' : 'rgba(88, 96, 105, 0.05)'};
+    background: transparent;
     padding: 0.5rem 1rem;
     border-radius: 20px;
     
     &:hover {
-      background: rgba(45, 164, 78, 0.1);
+      background: rgba(45, 164, 78, 0.05);
     }
     
     &:after {
