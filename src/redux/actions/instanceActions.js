@@ -161,7 +161,7 @@ export const fetchRepositoryIssues = (authToken, repoUrl) => async (dispatch) =>
   return attemptFetch();
 };
 
-export const addRepository = (authToken, repoUrl, defaultReward, isSingleIssue) => async (dispatch) => {
+export const addRepository = (authToken, repoUrl, defaultReward) => async (dispatch) => {
   dispatch({ type: ADD_REPOSITORY_REQUEST });
   try {
     const url = new URL('https://api.agent.market/v1/github/repositories');
@@ -171,10 +171,6 @@ export const addRepository = (authToken, repoUrl, defaultReward, isSingleIssue) 
       repo_url: repoUrl,
       default_reward: defaultReward.toString()
     });
-
-    if (isSingleIssue) {
-      params.append('single_issue', 'true');
-    }
 
     // Append the query string to the URL
     url.search = params.toString();
@@ -200,10 +196,10 @@ export const addRepository = (authToken, repoUrl, defaultReward, isSingleIssue) 
       console.error('Error fetching repository issues:', error);
     }
     
-    toast.success(isSingleIssue ? 'Issue added successfully!' : 'Repository added successfully! From now on, all open issues in this repository will be solved.');
+    toast.success('Repository added successfully! From now on, all open issues in this repository will be solved.');
   } catch (error) {
     dispatch({ type: ADD_REPOSITORY_FAILURE, payload: error.message });
-    toast.error(isSingleIssue ? 'Failed to add issue' : 'Failed to add repository');
+    toast.error('Failed to add repository');
   }
 };
 

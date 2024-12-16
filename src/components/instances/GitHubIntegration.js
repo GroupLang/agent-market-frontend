@@ -23,11 +23,7 @@ import {
   Snackbar,
   Alert,
   Tooltip,
-  Chip,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel
+  Chip
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -49,7 +45,6 @@ const GitHubIntegration = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [countdowns, setCountdowns] = useState({});
   const [blockingIssues, setBlockingIssues] = useState({});
-  const [isSingleIssue, setIsSingleIssue] = useState(false);
   
   const { repositories, repositoryIssues, repositoryLoading, repositoryError } = useSelector(state => state.instances);
   const { token: authToken } = useSelector(state => state.auth);
@@ -125,15 +120,10 @@ const GitHubIntegration = () => {
   const handleAddRepository = (e) => {
     e.preventDefault();
     if (repoUrl && defaultReward && authToken) {
-      dispatch(addRepository(authToken, repoUrl, parseFloat(defaultReward), isSingleIssue));
+      dispatch(addRepository(authToken, repoUrl, parseFloat(defaultReward)));
       setRepoUrl('');
       setDefaultReward('0.0');
-      setIsSingleIssue(false);
     }
-  };
-
-  const handleModeChange = (event) => {
-    setIsSingleIssue(event.target.value === 'single');
   };
 
   const handleRemoveRepository = (repoUrl) => {
@@ -298,69 +288,13 @@ const GitHubIntegration = () => {
       }}>
         <form onSubmit={handleAddRepository}>
           <Grid container spacing={2} alignItems="flex-start">
-            <Grid item xs={12}>
-              <FormControl 
-                fullWidth
-                size="small"
-                sx={{ 
-                  mb: 2,
-                  maxWidth: 300,
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: '#f6f8fa',
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#a8b1ba'
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#0969da',
-                      borderWidth: '1px'
-                    }
-                  }
-                }}
-              >
-                <InputLabel 
-                  id="mode-select-label"
-                  sx={{
-                    fontSize: '14px',
-                    color: '#57606a',
-                    '&.Mui-focused': {
-                      color: '#0969da'
-                    }
-                  }}
-                >
-                  Mode
-                </InputLabel>
-                <Select
-                  labelId="mode-select-label"
-                  value={isSingleIssue ? 'single' : 'all'}
-                  onChange={handleModeChange}
-                  label="Mode"
-                  sx={{
-                    fontSize: '14px',
-                    '& .MuiSelect-select': {
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1
-                    }
-                  }}
-                >
-                  <MenuItem value="all" sx={{ fontSize: '14px' }}>
-                    <ListIcon sx={{ fontSize: 20, color: '#57606a', mr: 1 }} />
-                    All Repository Issues
-                  </MenuItem>
-                  <MenuItem value="single" sx={{ fontSize: '14px' }}>
-                    <BugReportIcon sx={{ fontSize: 20, color: '#57606a', mr: 1 }} />
-                    Single Issue
-                  </MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label={isSingleIssue ? "Issue URL" : "Repository URL"}
+                label="Repository URL"
                 value={repoUrl}
                 onChange={(e) => setRepoUrl(e.target.value)}
-                placeholder={isSingleIssue ? "https://github.com/owner/repo/issues/1" : "https://github.com/owner/repo"}
+                placeholder="Enter repository URL"
                 required
                 variant="outlined"
                 size="small"
@@ -472,7 +406,7 @@ const GitHubIntegration = () => {
                   }
                 }}
               >
-                {isSingleIssue ? 'Add Issue' : 'Add Repository'}
+                Add Repository
               </Button>
             </Grid>
           </Grid>
