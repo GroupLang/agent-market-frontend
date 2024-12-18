@@ -32,6 +32,7 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 import TimerIcon from '@mui/icons-material/Timer';
+import InfoIcon from '@mui/icons-material/Info';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ListIcon from '@mui/icons-material/List';
 import BugReportIcon from '@mui/icons-material/BugReport';
@@ -45,37 +46,96 @@ const GitHubIntegration = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [countdowns, setCountdowns] = useState({});
   const [blockingIssues, setBlockingIssues] = useState({});
+  const [instanceStatuses, setInstanceStatuses] = useState({});
   
   const { repositories, repositoryIssues, repositoryLoading, repositoryError } = useSelector(state => state.instances);
   const { token: authToken } = useSelector(state => state.auth);
 
-  const calculateTimeRemaining = (createdAt) => {
-    // Parse the ISO string directly as UTC
-    const creationDate = new Date(createdAt + 'Z'); // Ensure UTC by appending Z if not present
-    const blockDate = new Date(creationDate.getTime() + (24 * 60 * 60 * 1000));
+  const fetchInstanceStatus = async (instanceId) => {
+    try {
+      const response = await fetch(`https://api.agent.market/v1/instances/${instanceId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch instance status');
+      }
+      const data = await response.json();
+      setInstanceStatuses(prev => ({
+        ...prev,
+        [instanceId]: data.status
+      }));
+    } catch (error) {
+      console.error('Error fetching instance status:', error);
+    }
+  };
+
+  useEffect(() => {
+    // Fetch instance statuses for issues that have instance_id
+    repositories.forEach(repo => {
+      if (repositoryIssues[repo.repo_url]) {
+        repositoryIssues[repo.repo_url].forEach(issue => {
+          if (issue.instance_id && !instanceStatuses[issue.instance_id]) {
+            fetchInstanceStatus(issue.instance_id);
+          }
+        });
+      }
+    });
+  }, [repositories, repositoryIssues, authToken]);
+
+  const calculateTimeRemaining = (createdAt, prCreatedAt, status, updatedAt) => {
     const now = new Date();
+    const creationDate = new Date(createdAt + 'Z'); // Ensure UTC
 
-    // Get all timestamps in UTC
-    const creationUTC = creationDate.getTime();
-    const blockUTC = blockDate.getTime();
-    const nowUTC = now.getTime();
+    // If issue is closed, start 7-day review period from updated_at
+    if (parseInt(status) === 6 && updatedAt) {
+      const updateDate = new Date(updatedAt + 'Z'); // Ensure UTC
+      const reviewEndDate = new Date(updateDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+      const timeRemaining = reviewEndDate.getTime() - now.getTime();
 
-    const timeRemaining = blockUTC - nowUTC;
+      if (timeRemaining <= 0) {
+        return { expired: true, timeString: 'Review period ended', type: 'review' };
+      }
 
-    if (timeRemaining <= 0) {
-      return { expired: true, timeString: 'Block payment window has ended' };
+      const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+      return {
+        expired: false,
+        timeString: `${days}d ${hours}h`,
+        days,
+        hours,
+        percentage: (timeRemaining / (7 * 24 * 60 * 60 * 1000)) * 100,
+        type: 'review'
+      };
     }
 
-    const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
-    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+    // If PR hasn't been created yet, check order expiration (2 days)
+    if (!prCreatedAt) {
+      const expirationDate = new Date(creationDate.getTime() + (2 * 24 * 60 * 60 * 1000));
+      const timeRemaining = expirationDate.getTime() - now.getTime();
 
-    return {
-      expired: false,
-      timeString: `${hours}h ${minutes}m`,
-      hours,
-      minutes,
-      percentage: (timeRemaining / (24 * 60 * 60 * 1000)) * 100
-    };
+      if (timeRemaining <= 0) {
+        return { expired: true, timeString: 'Order expired', type: 'expiration' };
+      }
+
+      const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+      return {
+        expired: false,
+        timeString: `${days}d ${hours}h`,
+        days,
+        hours,
+        percentage: (timeRemaining / (2 * 24 * 60 * 60 * 1000)) * 100,
+        type: 'expiration'
+      };
+    }
+
+    // If PR has been created but issue not closed yet
+    return { expired: false, timeString: 'PR opened', type: 'pr_opened' };
   };
 
   useEffect(() => {
@@ -85,7 +145,12 @@ const GitHubIntegration = () => {
         if (repositoryIssues[repo.repo_url]) {
           repositoryIssues[repo.repo_url].forEach(issue => {
             if (issue.created_at) {
-              newCountdowns[`${repo.repo_url}-${issue.issue_number}`] = calculateTimeRemaining(issue.created_at);
+              newCountdowns[`${repo.repo_url}-${issue.issue_number}`] = calculateTimeRemaining(
+                issue.created_at, 
+                issue.pr_created_at,
+                issue.status,
+                issue.updated_at
+              );
             }
           });
         }
@@ -573,6 +638,10 @@ const GitHubIntegration = () => {
                 {repositoryIssues[repo.repo_url]
                   .filter(issue => {
                     const status = parseInt(issue.status);
+                    // For closed issues (status 6), only show if instance status is 3
+                    if (status === 6) {
+                      return issue.instance_id && instanceStatuses[issue.instance_id] === 3;
+                    }
                     return status === 0 || status === 8 || status === 9;
                   })
                   .map((issue) => (
@@ -605,6 +674,7 @@ const GitHubIntegration = () => {
                             <Typography variant="caption" sx={{ color: '#57606a' }}>
                               Issue Status: {parseInt(issue.status) === 8 ? 'Payment Required' : 
                                       parseInt(issue.status) === 9 ? 'Payment Blocked' :
+                                      parseInt(issue.status) === 6 ? 'Closed' :
                                       parseInt(issue.status) === 0 ? 'Open' : 
                                       issue.status || 'Open'} | 
                               Reward: {issue.default_reward ? `$${issue.default_reward}` : `$${repo.default_reward}`} |
@@ -617,7 +687,8 @@ const GitHubIntegration = () => {
                           mr: { xs: 0, sm: 2 }
                         }}
                       />
-                      {parseInt(issue.status) !== 8 && parseInt(issue.status) !== 9 && !countdowns[`${repo.repo_url}-${issue.issue_number}`]?.expired && (
+                      {(parseInt(issue.status) !== 8 && parseInt(issue.status) !== 9) && 
+                       (parseInt(issue.status) === 6 || !countdowns[`${repo.repo_url}-${issue.issue_number}`]?.expired) && (
                         <Box 
                           sx={{ 
                             display: 'flex', 
@@ -641,18 +712,41 @@ const GitHubIntegration = () => {
                                 fontWeight: 500,
                                 lineHeight: 1,
                                 ml: '4px',
-                                mb: '-15px'
+                                mb: '-15px',
+                                display: countdowns[`${repo.repo_url}-${issue.issue_number}`]?.type === 'pr_opened' ? 'none' : 'block'
                               }}
                             >
-                              Time window to block
+                              {countdowns[`${repo.repo_url}-${issue.issue_number}`]?.type === 'review' 
+                                ? 'Review period remaining'
+                                : 'Waiting for PR'}
                             </Typography>
                             <Chip
                               label={countdowns[`${repo.repo_url}-${issue.issue_number}`]?.timeString}
                               size="small"
+                              icon={
+                                countdowns[`${repo.repo_url}-${issue.issue_number}`]?.type === 'review' 
+                                  ? <TimerIcon style={{ fontSize: 14, color: '#0969da' }} />
+                                  : countdowns[`${repo.repo_url}-${issue.issue_number}`]?.type === 'pr_opened'
+                                    ? <InfoIcon style={{ fontSize: 14, color: '#2da44e' }} />
+                                    : <TimerIcon style={{ fontSize: 14, color: '#9a6700' }} />
+                              }
                               sx={{
-                                backgroundColor: '#f6f8fa',
-                                border: '1px solid #d0d7de',
-                                color: '#24292f',
+                                backgroundColor: countdowns[`${repo.repo_url}-${issue.issue_number}`]?.type === 'review'
+                                  ? '#ddf4ff'  // Light blue for review period
+                                  : countdowns[`${repo.repo_url}-${issue.issue_number}`]?.type === 'pr_opened'
+                                    ? '#dafbe1'  // Light green for PR opened
+                                    : '#fff8c5', // Light yellow for expiration
+                                border: '1px solid',
+                                borderColor: countdowns[`${repo.repo_url}-${issue.issue_number}`]?.type === 'review'
+                                  ? '#0969da'  // Blue for review period
+                                  : countdowns[`${repo.repo_url}-${issue.issue_number}`]?.type === 'pr_opened'
+                                    ? '#2da44e'  // Green for PR opened
+                                    : '#9a6700', // Yellow for expiration
+                                color: countdowns[`${repo.repo_url}-${issue.issue_number}`]?.type === 'review'
+                                  ? '#0969da'  // Blue for review period
+                                  : countdowns[`${repo.repo_url}-${issue.issue_number}`]?.type === 'pr_opened'
+                                    ? '#2da44e'  // Green for PR opened
+                                    : '#9a6700', // Yellow for expiration
                                 fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"',
                                 fontSize: '12px',
                                 height: '24px',
@@ -666,35 +760,38 @@ const GitHubIntegration = () => {
                                   lineHeight: 1,
                                 }
                               }}
-                              icon={<TimerIcon style={{ fontSize: 14, color: '#57606a' }} />}
                             />
                           </Box>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={blockingIssues[`${repo.repo_url}-${issue.issue_number}`] ? <CircularProgress size={16} /> : <MoneyOffIcon />}
-                            onClick={() => handleBlockIssue(repo.repo_url, issue.issue_number)}
-                            disabled={issue.payment_blocked || blockingIssues[`${repo.repo_url}-${issue.issue_number}`]}
-                            sx={{
-                              borderColor: '#d0d7de',
-                              color: '#24292f',
-                              textTransform: 'none',
-                              fontSize: '12px',
-                              fontWeight: 500,
-                              fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"',
-                              minWidth: { xs: '120px', sm: 'auto' },
-                              '&:hover': {
-                                backgroundColor: '#f6f8fa',
-                                borderColor: '#24292f'
-                              },
-                              '&:disabled': {
+                          {countdowns[`${repo.repo_url}-${issue.issue_number}`]?.type === 'review' && 
+                           issue.instance_id && 
+                           instanceStatuses[issue.instance_id] === 3 && (
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={blockingIssues[`${repo.repo_url}-${issue.issue_number}`] ? <CircularProgress size={16} /> : <MoneyOffIcon />}
+                              onClick={() => handleBlockIssue(repo.repo_url, issue.issue_number)}
+                              disabled={issue.payment_blocked || blockingIssues[`${repo.repo_url}-${issue.issue_number}`]}
+                              sx={{
                                 borderColor: '#d0d7de',
-                                color: '#8c959f'
-                              }
-                            }}
-                          >
-                            {blockingIssues[`${repo.repo_url}-${issue.issue_number}`] ? 'Blocking...' : 'Block Payment'}
-                          </Button>
+                                color: '#24292f',
+                                textTransform: 'none',
+                                fontSize: '12px',
+                                fontWeight: 500,
+                                fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"',
+                                minWidth: { xs: '120px', sm: 'auto' },
+                                '&:hover': {
+                                  backgroundColor: '#f6f8fa',
+                                  borderColor: '#24292f'
+                                },
+                                '&:disabled': {
+                                  borderColor: '#d0d7de',
+                                  color: '#8c959f'
+                                }
+                              }}
+                            >
+                              {blockingIssues[`${repo.repo_url}-${issue.issue_number}`] ? 'Blocking...' : 'Block Payment'}
+                            </Button>
+                          )}
                         </Box>
                       )}
                     </ListItem>
