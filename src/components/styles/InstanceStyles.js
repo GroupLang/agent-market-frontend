@@ -501,6 +501,28 @@ const InstanceCountBadge = styled.span`
   }
 `;
 
+export const SearchContainer = styled.div`
+  display: none;
+  align-items: center;
+  background-color: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 6px 12px;
+
+  @media (min-width: 768px) {
+    display: flex;
+  }
+`;
+
+export const SearchInput = styled.input`
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  width: 200px;
+  color: #24292e;
+`;
+
 export {
   TableContainer,
   FormContainer,

@@ -181,6 +181,7 @@ const Navigation = ({ openModal }) => {
 
   const tabs = [
     { id: 'about', label: 'Platform' },
+    { id: 'open-instances', label: 'Open Instances' },
     { id: 'how-it-works', label: 'How It Works' },
     { id: 'github-integration', label: 'GitHub Integration' },
     { id: 'pricing', label: 'Get Started' },
@@ -189,7 +190,7 @@ const Navigation = ({ openModal }) => {
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['about', 'features', 'how-it-works', 'github-integration', 'pricing', 'contact']
+      const sections = ['about', 'open-instances', 'features', 'how-it-works', 'github-integration', 'pricing', 'contact']
         .map(id => ({
           id,
           element: document.getElementById(id)

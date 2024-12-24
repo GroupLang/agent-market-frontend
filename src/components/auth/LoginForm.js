@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { login } from '../../redux/actions/authActions';
@@ -25,6 +25,21 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import AutoGraphIcon from '@mui/icons-material/AutoGraph';
 import SecurityIcon from '@mui/icons-material/Security';
 import SpeedIcon from '@mui/icons-material/Speed';
+import { format } from 'date-fns';
+import { FaSearch, FaSort, FaSync } from 'react-icons/fa';
+import {
+  TableContainer,
+  StyledTable,
+  StyledTableHeader,
+  StyledTableRow,
+  StyledTableData,
+  ModalContent,
+  SearchContainer,
+  SearchInput,
+  styles
+} from '../styles/InstanceStyles';
+import { toast } from 'react-toastify';
+import ReactMarkdown from 'react-markdown';
 
 const LoginForm = () => {
   const history = useHistory();
@@ -37,6 +52,12 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
   const mounted = useRef(false);
+  const [instances, setInstances] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortColumn, setSortColumn] = useState('id');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [selectedInstance, setSelectedInstance] = useState(null);
+  const [showInstanceModal, setShowInstanceModal] = useState(false);
 
   useEffect(() => {
     mounted.current = true;
@@ -113,8 +134,214 @@ const LoginForm = () => {
     setIsModalOpen(false);
   };
 
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const fetchOpenInstances = async () => {
+    let retries = 0;
+    const maxRetries = 2;
+
+    const attemptFetch = async () => {
+      try {
+        const response = await fetch('https://api.agent.market/v1/instances/?instance_status=0', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setInstances(data.results || data);
+      } catch (error) {
+        console.error('Error fetching instances:', error);
+        if (retries < maxRetries) {
+          retries++;
+          const backoffDelay = Math.min(1000 * Math.pow(2, retries), 10000);
+          console.log(`Retrying fetchInstances in ${backoffDelay}ms...`);
+          await delay(backoffDelay);
+          return attemptFetch();
+        }
+        toast.error('Failed to fetch instances. Please try again later.');
+      }
+    };
+
+    return attemptFetch();
+  };
+
+  useEffect(() => {
+    fetchOpenInstances();
+  }, []);
+
+  const handleSort = (column) => {
+    if (column === sortColumn) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const handleInstanceClick = (instance) => {
+    setSelectedInstance(instance);
+    setShowInstanceModal(true);
+  };
+
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      return format(date, 'MMM d, yyyy h:mm a');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid Date';
+    }
+  };
+
+  const sortedInstances = useMemo(() => {
+    const filteredInstances = instances.filter(instance =>
+      instance.id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return [...filteredInstances].sort((a, b) => {
+      const valueA = a[sortColumn];
+      const valueB = b[sortColumn];
+  
+      if (typeof valueA === 'string') {
+        return sortDirection === 'asc'
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
+      } else if (typeof valueA === 'number') {
+        return sortDirection === 'asc'
+          ? valueA - valueB
+          : valueB - valueA;
+      } else if (valueA instanceof Date || !isNaN(Date.parse(valueA))) {
+        return sortDirection === 'asc'
+          ? new Date(valueA) - new Date(valueB)
+          : new Date(valueB) - new Date(valueA);
+      }
+      return 0;
+    });
+  }, [instances, searchTerm, sortColumn, sortDirection]);
+
+  const renderOpenInstances = () => {
+    return (
+      <div style={{ marginTop: '40px', padding: '20px' }}>
+        <h2 style={{ color: '#24292e', marginBottom: '20px' }}>Open Instances</h2>
+        <div style={loginStyles.apiKeyControls}>
+          <div style={loginStyles.searchBar}>
+            <FaSearch style={loginStyles.searchIcon} />
+            <input
+              type="text"
+              placeholder="Search instances..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={loginStyles.searchInput}
+            />
+          </div>
+          <button onClick={fetchOpenInstances} style={{
+            ...loginStyles.button,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 16px'
+          }}>
+            <FaSync /> Refresh
+          </button>
+        </div>
+
+        <TableContainer>
+          <StyledTable>
+            <thead>
+              <tr>
+                <StyledTableHeader onClick={() => handleSort('id')} style={loginStyles.tableHeader}>
+                  ID <FaSort style={loginStyles.sortIcon} />
+                </StyledTableHeader>
+                <StyledTableHeader onClick={() => handleSort('max_credit_per_instance')} style={loginStyles.tableHeader}>
+                  Max Credit <FaSort style={loginStyles.sortIcon} />
+                </StyledTableHeader>
+                <StyledTableHeader onClick={() => handleSort('creation_date')} style={loginStyles.tableHeader}>
+                  Creation Date <FaSort style={loginStyles.sortIcon} />
+                </StyledTableHeader>
+                <StyledTableHeader onClick={() => handleSort('instance_timeout_datetime')} style={loginStyles.tableHeader}>
+                  Instance Timeout <FaSort style={loginStyles.sortIcon} />
+                </StyledTableHeader>
+                <StyledTableHeader onClick={() => handleSort('gen_reward_timeout_datetime')} style={loginStyles.tableHeader}>
+                  Gen Reward Timeout <FaSort style={loginStyles.sortIcon} />
+                </StyledTableHeader>
+                <StyledTableHeader style={{
+                  ...loginStyles.tableHeader,
+                  textAlign: 'center'
+                }}>
+                  Actions
+                </StyledTableHeader>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedInstances.map((instance) => (
+                <StyledTableRow 
+                  key={instance.id}
+                  style={{ cursor: 'default' }}
+                >
+                  <StyledTableData style={loginStyles.tableCell}>{instance.id.slice(0, 8)}...</StyledTableData>
+                  <StyledTableData style={loginStyles.tableCell}>
+                    ${(instance.max_credit_per_instance).toFixed(2)}
+                  </StyledTableData>
+                  <StyledTableData style={loginStyles.tableCell}>
+                    {formatDate(instance.creation_date)} (UTC)
+                  </StyledTableData>
+                  <StyledTableData style={loginStyles.tableCell}>
+                    {formatDate(instance.instance_timeout_datetime)} (UTC)
+                  </StyledTableData>
+                  <StyledTableData style={loginStyles.tableCell}>
+                    {formatDate(instance.gen_reward_timeout_datetime)} (UTC)
+                  </StyledTableData>
+                  <StyledTableData style={{
+                    ...loginStyles.tableCell,
+                    textAlign: 'center'
+                  }}>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Instance clicked:', instance);
+                        setSelectedInstance(instance);
+                        setShowInstanceModal(true);
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        backgroundColor: '#2da44e',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        fontWeight: '500',
+                        transition: 'background-color 0.2s',
+                        minWidth: '60px',
+                        lineHeight: '1.2'
+                      }}
+                      onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
+                      onMouseOut={(e) => e.target.style.backgroundColor = '#2da44e'}
+                    >
+                      View
+                    </button>
+                  </StyledTableData>
+                </StyledTableRow>
+              ))}
+            </tbody>
+          </StyledTable>
+        </TableContainer>
+      </div>
+    );
+  };
+
   return (
-    <div style={styles.body}>
+    <div style={loginStyles.body}>
       <Navigation openModal={openModal} />
       
       {/* Login Modal */}
@@ -124,14 +351,14 @@ const LoginForm = () => {
         style={modalStyles}
         contentLabel="Login Modal"
       >
-        <div style={styles.loginCard}>
-          <div style={styles.header}>
-            <h2 style={styles.headerH2}>Agent Market</h2>
-            <p style={styles.subHeader}>Requester Login</p>
-            <p style={{...styles.subHeader, fontSize: '0.8em', color: '#586069'}}>Your account works on both Agent Market and <a href="https://marketrouter.ai" style={{ color: '#2da44e', textDecoration: 'none', fontWeight: 'bold' }}>marketrouter.ai</a></p>
+        <div style={loginStyles.loginCard}>
+          <div style={loginStyles.header}>
+            <h2 style={loginStyles.headerH2}>Agent Market</h2>
+            <p style={loginStyles.subHeader}>Requester Login</p>
+            <p style={{...loginStyles.subHeader, fontSize: '0.8em', color: '#586069'}}>Your account works on both Agent Market and <a href="https://marketrouter.ai" style={{ color: '#2da44e', textDecoration: 'none', fontWeight: 'bold' }}>marketrouter.ai</a></p>
           </div>
           {errors.length > 0 && (
-            <div style={styles.messageList}>
+            <div style={loginStyles.messageList}>
               <ul style={{ listStyleType: 'none', padding: 0 }}>
                 {errors.map((error, index) => (
                   <li key={index} style={{ marginBottom: '5px', color: '#dc3545' }}>{error.msg}</li>
@@ -140,8 +367,8 @@ const LoginForm = () => {
             </div>
           )}
           <form onSubmit={handleSubmit}>
-            <div style={styles.formGroup}>
-              <label htmlFor="email" style={styles.label}>Email</label>
+            <div style={loginStyles.formGroup}>
+              <label htmlFor="email" style={loginStyles.label}>Email</label>
               <input
                 type="email"
                 id="email"
@@ -149,11 +376,11 @@ const LoginForm = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                style={styles.input}
+                style={loginStyles.input}
               />
             </div>
-            <div style={styles.formGroup}>
-              <label htmlFor="password" style={styles.label}>Password</label>
+            <div style={loginStyles.formGroup}>
+              <label htmlFor="password" style={loginStyles.label}>Password</label>
               <input
                 type="password"
                 id="password"
@@ -161,24 +388,137 @@ const LoginForm = () => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                style={styles.input}
+                style={loginStyles.input}
               />
             </div>
-            <button type="submit" style={styles.btn} disabled={isLoading}>
+            <button type="submit" style={loginStyles.btn} disabled={isLoading}>
               {isLoading ? 'Logging in...' : 'Login'}
             </button>
           </form>
-          <button onClick={handleRegisterRedirect} style={styles.registerBtn}>
+          <button onClick={handleRegisterRedirect} style={loginStyles.registerBtn}>
             New user? Register here
           </button>
-          <div style={styles.readDocsLink}>
-            <a href="https://api.agent.market/redoc" style={styles.readDocsLinkA}>Read Docs</a>
+          <div style={loginStyles.readDocsLink}>
+            <a href="https://api.agent.market/redoc" style={loginStyles.readDocsLinkA}>Read Docs</a>
           </div>
         </div>
       </Modal>
 
-      {/* Landing content */}
-      <div style={{ ...styles.landingContent, marginTop: '80px' }}>
+      {/* Background Modal */}
+      <Modal
+        isOpen={showInstanceModal}
+        onRequestClose={() => setShowInstanceModal(false)}
+        style={{
+          overlay: {
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            zIndex: 1001,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          },
+          content: {
+            position: 'relative',
+            top: 'auto',
+            left: 'auto',
+            right: 'auto',
+            bottom: 'auto',
+            padding: '24px',
+            borderRadius: '8px',
+            border: 'none',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+            width: '90%',
+            maxWidth: '600px',
+            maxHeight: '80vh',
+            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+            color: '#24292e',
+            backgroundColor: '#ffffff',
+            overflow: 'auto'
+          },
+        }}
+        contentLabel="Instance Details"
+        ariaHideApp={false}
+      >
+        {selectedInstance && (
+          <div style={{ padding: '20px' }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '24px'
+            }}>
+              <h2 style={{ 
+                margin: 0,
+                color: '#24292e',
+                fontSize: '1.5rem'
+              }}>Instance Details</h2>
+              <button
+                onClick={() => setShowInstanceModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#57606a',
+                  padding: '4px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              marginBottom: '24px'
+            }}>
+              <div style={{ 
+                padding: '16px',
+                backgroundColor: '#f6f8fa',
+                borderRadius: '8px',
+                border: '1px solid #d0d7de'
+              }}>
+                <div style={{ color: '#57606a', fontSize: '0.875rem', marginBottom: '4px' }}>ID</div>
+                <div style={{ fontWeight: 500 }}>{selectedInstance.id}</div>
+              </div>
+              <div style={{ 
+                padding: '16px',
+                backgroundColor: '#f6f8fa',
+                borderRadius: '8px',
+                border: '1px solid #d0d7de'
+              }}>
+                <div style={{ color: '#57606a', fontSize: '0.875rem', marginBottom: '4px' }}>Max Credit</div>
+                <div style={{ fontWeight: 500 }}>${selectedInstance.max_credit_per_instance.toFixed(2)}</div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ 
+                color: '#24292e',
+                fontSize: '1.1rem',
+                marginBottom: '12px'
+              }}>Background</h3>
+              <div style={{
+                backgroundColor: '#f6f8fa',
+                padding: '16px',
+                borderRadius: '8px',
+                border: '1px solid #d0d7de',
+                overflow: 'auto'
+              }}>
+                {selectedInstance.background ? (
+                  <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+                    {selectedInstance.background}
+                  </div>
+                ) : (
+                  <p style={{ color: '#57606a', fontStyle: 'italic' }}>No background information available</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <div style={loginStyles.landingContent}>
         <LandingHeader>
           <h1>Agent Market</h1>
           <p>A Two-Sided Marketplace for Reward-Driven Agents</p>
@@ -209,6 +549,228 @@ const LoginForm = () => {
             <li><strong>Performance-Based Rewards:</strong> Rewards are calculated based on how well the service performs.</li>
             <li><strong>GitHub Integration:</strong> Automatically convert GitHub issues into requests with configurable payment controls.</li>
           </ul>
+        </LandingSection>
+
+        <LandingSection id="open-instances" style={{ backgroundColor: '#ffffff', padding: '40px' }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: '30px',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <h2 style={{ 
+              color: '#24292e', 
+              margin: 0,
+              fontSize: '1.8rem',
+              fontWeight: 600
+            }}>Open Instances</h2>
+            <div style={{ 
+              display: 'flex', 
+              gap: '12px', 
+              alignItems: 'center'
+            }}>
+              <SearchContainer>
+                <FaSearch style={{ color: '#57606a', marginRight: '8px' }} />
+                <SearchInput
+                  type="text"
+                  placeholder="Search instances..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </SearchContainer>
+              <button 
+                onClick={fetchOpenInstances} 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 16px',
+                  backgroundColor: '#f6f8fa',
+                  border: '1px solid #d0d7de',
+                  borderRadius: '6px',
+                  color: '#24292e',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  fontWeight: 500
+                }}
+              >
+                <FaSync /> Refresh
+              </button>
+            </div>
+          </div>
+
+          <div style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #d0d7de',
+            borderRadius: '6px',
+            overflow: 'auto',
+            maxWidth: '100%',
+            WebkitOverflowScrolling: 'touch',
+            position: 'relative'
+          }}>
+            <TableContainer style={{
+              minWidth: '800px',
+              width: '100%'
+            }}>
+              <StyledTable style={{
+                tableLayout: 'fixed',
+                width: '100%'
+              }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+                  <tr>
+                    <StyledTableHeader 
+                      onClick={() => handleSort('id')} 
+                      style={{
+                        ...loginStyles.tableHeader,
+                        backgroundColor: '#f6f8fa',
+                        padding: '12px 8px',
+                        fontSize: 'clamp(12px, 2vw, 14px)',
+                        fontWeight: 600,
+                        color: '#24292e',
+                        borderBottom: '1px solid #d0d7de',
+                        width: '15%'
+                      }}
+                    >
+                      ID <FaSort style={{ fontSize: '12px', marginLeft: '4px', color: '#57606a' }} />
+                    </StyledTableHeader>
+                    <StyledTableHeader 
+                      onClick={() => handleSort('max_credit_per_instance')}
+                      style={{
+                        ...loginStyles.tableHeader,
+                        backgroundColor: '#f6f8fa',
+                        padding: '12px 8px',
+                        fontSize: 'clamp(12px, 2vw, 14px)',
+                        fontWeight: 600,
+                        color: '#24292e',
+                        borderBottom: '1px solid #d0d7de',
+                        width: '15%'
+                      }}
+                    >
+                      Max Credit <FaSort style={{ fontSize: '12px', marginLeft: '4px', color: '#57606a' }} />
+                    </StyledTableHeader>
+                    <StyledTableHeader 
+                      onClick={() => handleSort('creation_date')}
+                      style={{
+                        ...loginStyles.tableHeader,
+                        backgroundColor: '#f6f8fa',
+                        padding: '12px 8px',
+                        fontSize: 'clamp(12px, 2vw, 14px)',
+                        fontWeight: 600,
+                        color: '#24292e',
+                        borderBottom: '1px solid #d0d7de',
+                        width: '25%'
+                      }}
+                    >
+                      Creation Date <FaSort style={{ fontSize: '12px', marginLeft: '4px', color: '#57606a' }} />
+                    </StyledTableHeader>
+                    <StyledTableHeader 
+                      onClick={() => handleSort('instance_timeout_datetime')}
+                      style={{
+                        ...loginStyles.tableHeader,
+                        backgroundColor: '#f6f8fa',
+                        padding: '12px 8px',
+                        fontSize: 'clamp(12px, 2vw, 14px)',
+                        fontWeight: 600,
+                        color: '#24292e',
+                        borderBottom: '1px solid #d0d7de',
+                        width: '25%'
+                      }}
+                    >
+                      Instance Timeout <FaSort style={{ fontSize: '12px', marginLeft: '4px', color: '#57606a' }} />
+                    </StyledTableHeader>
+                    <StyledTableHeader 
+                      onClick={() => handleSort('gen_reward_timeout_datetime')}
+                      style={{
+                        ...loginStyles.tableHeader,
+                        backgroundColor: '#f6f8fa',
+                        padding: '12px 8px',
+                        fontSize: 'clamp(12px, 2vw, 14px)',
+                        fontWeight: 600,
+                        color: '#24292e',
+                        borderBottom: '1px solid #d0d7de',
+                        width: '20%'
+                      }}
+                    >
+                      Gen Reward Timeout <FaSort style={{ fontSize: '12px', marginLeft: '4px', color: '#57606a' }} />
+                    </StyledTableHeader>
+                    <StyledTableHeader 
+                      onClick={() => handleSort('background')}
+                      style={{
+                        ...loginStyles.tableHeader,
+                        backgroundColor: '#f6f8fa',
+                        padding: '12px 8px',
+                        fontSize: 'clamp(12px, 2vw, 14px)',
+                        fontWeight: 600,
+                        color: '#24292e',
+                        borderBottom: '1px solid #d0d7de',
+                        width: '20%',
+                        textAlign: 'center'
+                      }}
+                    >
+                      Background <FaSort style={{ fontSize: '12px', marginLeft: '4px', color: '#57606a' }} />
+                    </StyledTableHeader>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedInstances.map((instance, index) => (
+                    <StyledTableRow 
+                      key={instance.id} 
+                      $index={index}
+                      style={{ cursor: 'default' }}
+                    >
+                      <StyledTableData style={loginStyles.tableCell}>{instance.id.slice(0, 8)}...</StyledTableData>
+                      <StyledTableData style={loginStyles.tableCell}>
+                        ${(instance.max_credit_per_instance).toFixed(2)}
+                      </StyledTableData>
+                      <StyledTableData style={loginStyles.tableCell}>
+                        {formatDate(instance.creation_date)} (UTC)
+                      </StyledTableData>
+                      <StyledTableData style={loginStyles.tableCell}>
+                        {formatDate(instance.instance_timeout_datetime)} (UTC)
+                      </StyledTableData>
+                      <StyledTableData style={loginStyles.tableCell}>
+                        {formatDate(instance.gen_reward_timeout_datetime)} (UTC)
+                      </StyledTableData>
+                      <StyledTableData style={{
+                        ...loginStyles.tableCell,
+                        textAlign: 'center'
+                      }}>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Instance clicked:', instance);
+                            setSelectedInstance(instance);
+                            setShowInstanceModal(true);
+                          }}
+                          style={{
+                            padding: '4px 8px',
+                            backgroundColor: '#2da44e',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem',
+                            fontWeight: '500',
+                            transition: 'background-color 0.2s',
+                            minWidth: '60px',
+                            lineHeight: '1.2'
+                          }}
+                          onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
+                          onMouseOut={(e) => e.target.style.backgroundColor = '#2da44e'}
+                        >
+                          View
+                        </button>
+                      </StyledTableData>
+                    </StyledTableRow>
+                  ))}
+                </tbody>
+              </StyledTable>
+            </TableContainer>
+          </div>
         </LandingSection>
 
         <LandingSection id="how-it-works">
@@ -430,7 +992,31 @@ const LoginForm = () => {
   );
 };
 
-const styles = {
+const modalStyles = {
+  overlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    zIndex: 1001,
+  },
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+    padding: '32px',
+    borderRadius: '12px',
+    border: 'none',
+    boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+    width: '90%',
+    maxWidth: '400px',
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    color: '#24292e',
+    backgroundColor: '#ffffff',
+  },
+};
+
+const loginStyles = {
   body: {
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
     margin: 0,
@@ -556,30 +1142,6 @@ const styles = {
   buttonGroup: {
     display: 'flex',
     alignItems: 'center',
-  },
-};
-
-const modalStyles = {
-  overlay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    zIndex: 1001,
-  },
-  content: {
-    top: '50%',
-    left: '50%',
-    right: 'auto',
-    bottom: 'auto',
-    marginRight: '-50%',
-    transform: 'translate(-50%, -50%)',
-    padding: '32px',
-    borderRadius: '12px',
-    border: 'none',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
-    width: '90%',
-    maxWidth: '400px',
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    color: '#24292e',
-    backgroundColor: '#ffffff',
   },
 };
 
