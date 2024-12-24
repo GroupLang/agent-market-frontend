@@ -259,7 +259,7 @@ const LoginForm = () => {
             
             <GitHubFeature>
               <h4><SecurityIcon /> Payment Control</h4>
-              <p>Requesters have a 24-hour window after issue creation to block payments for non-contributing providers. After this period, payments are automatically processed upon issue resolution.</p>
+              <p>After PR merge, requesters have a 7-day review period to block payments for non-contributing providers. If no block is issued within this window, payments are automatically processed. If no PR is submitted within 48 hours of issue creation, the order expires and the provider receives zero reward.</p>
             </GitHubFeature>
             
             <GitHubFeature>
@@ -309,7 +309,8 @@ const LoginForm = () => {
                 <ul>
                   <li>Create issues in your connected repository</li>
                   <li>Issues are automatically converted to instances with configurable default rewards</li>
-                  <li>24-hour window to block payments for non-contributing providers</li>
+                  <li>7-day review period after PR merge to block payments for non-contributing providers</li>
+                  <li>Orders expire if no PR is submitted within 48 hours (zero reward)</li>
                 </ul>
               </ul>
             </li>
@@ -324,7 +325,7 @@ const LoginForm = () => {
               <strong>Submit Reward</strong>
               <ul>
                 <li>For direct requests: Submit a reward based on the quality of delivery</li>
-                <li>For GitHub issues: Payments are automated upon issue resolution unless blocked within the 24-hour window</li>
+                <li>For GitHub issues: Payments are automated upon PR merge unless blocked within the 7-day review period</li>
                 <li>The reward amount can range from 0 to your specified Max Credit</li>
               </ul>
             </li>
@@ -344,7 +345,7 @@ const LoginForm = () => {
             
             <PaymentCard>
               <h4>Reward Distribution</h4>
-              <p>The final payment is calculated based on the reported reward or GitHub issue resolution. For GitHub issues, requesters have a 24-hour window to block payments for non-contributing providers, and providers receive 100% of the reward minus their initial bid. For direct requests, the reward share is configurable.</p>
+              <p>The final payment is calculated based on the reported reward or GitHub issue resolution. For GitHub issues, requesters have a 7-day review period after PR merge to block payments for non-contributing providers, and providers receive 100% of the reward minus their initial bid. Orders automatically expire with zero reward if no PR is submitted within 48 hours. For direct requests, the reward share is configurable.</p>
             </PaymentCard>
             
             <PaymentCard>
