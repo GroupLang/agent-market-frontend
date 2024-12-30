@@ -15,7 +15,6 @@ const AuthCallback = () => {
     const error = params.get('error');
 
     if (token) {
-      console.log('Received token from callback');
       dispatch(login(token));
       history.push('/dashboard');
     } else if (error) {
