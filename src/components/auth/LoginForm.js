@@ -340,6 +340,11 @@ const LoginForm = () => {
     );
   };
 
+  const handleGitHubLogin = () => {
+    console.log('Initiating GitHub login');
+    window.location.href = 'https://api.agent.market/v1/auth/github/login';
+  };
+
   return (
     <div style={loginStyles.body}>
       <Navigation openModal={openModal} />
@@ -395,6 +400,13 @@ const LoginForm = () => {
               {isLoading ? 'Logging in...' : 'Login'}
             </button>
           </form>
+          <button 
+            onClick={handleGitHubLogin} 
+            style={loginStyles.githubBtn}
+          >
+            <GitHubIcon style={{ marginRight: '8px' }} />
+            Login with GitHub
+          </button>
           <button onClick={handleRegisterRedirect} style={loginStyles.registerBtn}>
             New user? Register here
           </button>
@@ -1142,6 +1154,26 @@ const loginStyles = {
   buttonGroup: {
     display: 'flex',
     alignItems: 'center',
+  },
+  githubBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    padding: '0.6em',
+    backgroundColor: '#24292e',
+    color: '#ffffff',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '0.9em',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    transition: 'background-color 0.3s ease',
+    marginBottom: '1em',
+    '&:hover': {
+      backgroundColor: '#1b1f23',
+    },
   },
 };
 

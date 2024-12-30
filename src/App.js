@@ -6,6 +6,7 @@ import RegistrationForm from './components/auth/RegistrationForm';
 import PrivateRoute from './components/auth/PrivateRoute';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import AuthCallback from './components/auth/AuthCallback';
 
 const App = () => {
   return (
@@ -17,6 +18,7 @@ const App = () => {
         <Route exact path="/">
           <Redirect to="/login" />
         </Route>
+        <Route path="/auth/callback" component={AuthCallback} />
       </Switch>
       <ToastContainer />
     </Router>
