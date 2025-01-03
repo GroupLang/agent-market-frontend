@@ -23,7 +23,9 @@ import {
   Snackbar,
   Alert,
   Tooltip,
-  Chip
+  Chip,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -36,11 +38,13 @@ import InfoIcon from '@mui/icons-material/Info';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ListIcon from '@mui/icons-material/List';
 import BugReportIcon from '@mui/icons-material/BugReport';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 const GitHubIntegration = () => {
   const dispatch = useDispatch();
   const [repoUrl, setRepoUrl] = useState('');
   const [defaultReward, setDefaultReward] = useState('0.0');
+  const [representativeAgent, setRepresentativeAgent] = useState(false);
   const [expandedRepos, setExpandedRepos] = useState({});
   const [openToast, setOpenToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -185,9 +189,10 @@ const GitHubIntegration = () => {
   const handleAddRepository = (e) => {
     e.preventDefault();
     if (repoUrl && defaultReward && authToken) {
-      dispatch(addRepository(authToken, repoUrl, parseFloat(defaultReward)));
+      dispatch(addRepository(authToken, repoUrl, parseFloat(defaultReward), representativeAgent));
       setRepoUrl('');
       setDefaultReward('0.0');
+      setRepresentativeAgent(false);
     }
   };
 
@@ -473,6 +478,124 @@ const GitHubIntegration = () => {
               >
                 Add Repository
               </Button>
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                mt: 1.5,
+                backgroundColor: '#f6f8fa',
+                border: '1px solid #d0d7de',
+                borderRadius: '6px',
+                padding: '8px 12px',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  borderColor: '#57606a',
+                  backgroundColor: '#f3f4f6',
+                  boxShadow: '0 1px 3px rgba(27, 31, 36, 0.04)'
+                }
+              }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={representativeAgent}
+                      onChange={(e) => setRepresentativeAgent(e.target.checked)}
+                      sx={{
+                        padding: '2px',
+                        marginRight: '12px',
+                        color: '#57606a',
+                        '&.Mui-checked': {
+                          color: '#2da44e',
+                        },
+                        '& .MuiSvgIcon-root': {
+                          fontSize: 16,
+                          transition: 'transform 0.2s ease',
+                        },
+                        '&:hover': {
+                          backgroundColor: 'rgba(45, 164, 78, 0.08)',
+                          '& .MuiSvgIcon-root': {
+                            transform: 'scale(1.1)'
+                          }
+                        },
+                        '&.Mui-checked:hover': {
+                          backgroundColor: 'rgba(45, 164, 78, 0.12)'
+                        }
+                      }}
+                    />
+                  }
+                  label={
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 0.75,
+                      ml: 0.5
+                    }}>
+                      <Typography sx={{ 
+                        fontSize: '13px',
+                        color: '#24292f',
+                        fontWeight: 500,
+                        fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"',
+                        letterSpacing: '-0.1px'
+                      }}>
+                        Add representative agent
+                      </Typography>
+                      <Tooltip 
+                        title={
+                          <Box sx={{ p: 0.75 }}>
+                            <Typography sx={{ 
+                              fontSize: '12px',
+                              color: '#ffffff',
+                              lineHeight: 1.4,
+                              fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"',
+                              letterSpacing: '0.1px'
+                            }}>
+                              An AI agent will handle chat interactions. The reward will be shared between this agent and the issue-solving agent.
+                            </Typography>
+                          </Box>
+                        }
+                        placement="right"
+                        arrow
+                        enterDelay={200}
+                        leaveDelay={150}
+                        sx={{
+                          '& .MuiTooltip-arrow': {
+                            color: 'rgba(0, 0, 0, 0.9)'
+                          },
+                          '& .MuiTooltip-tooltip': {
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                            borderRadius: '6px',
+                            maxWidth: '300px'
+                          }
+                        }}
+                      >
+                        <HelpOutlineIcon sx={{ 
+                          fontSize: 13, 
+                          color: '#57606a',
+                          cursor: 'help',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            color: '#24292f',
+                            transform: 'scale(1.15)'
+                          }
+                        }} />
+                      </Tooltip>
+                    </Box>
+                  }
+                  sx={{
+                    margin: 0,
+                    userSelect: 'none',
+                    width: '100%',
+                    '& .MuiTypography-root': {
+                      fontSize: '13px',
+                      fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji"',
+                    },
+                    '&:hover .MuiTypography-root': {
+                      color: '#000000'
+                    }
+                  }}
+                />
+              </Box>
             </Grid>
           </Grid>
         </form>

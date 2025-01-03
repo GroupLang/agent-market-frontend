@@ -54,6 +54,7 @@ const Instances = () => {
     gen_reward_timeout: 2000,
     percentage_reward: 1,
     prompt_template: '',
+    representative_agent: false,
   });
 
   useEffect(() => {
@@ -77,12 +78,13 @@ const Instances = () => {
   };
 
   const handleParamChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setInstanceParams(prev => ({
       ...prev,
-      [name]: name === 'max_credit_per_instance' ? parseFloat(value) : 
-               name === 'background' ? value :
-               parseInt(value, 10)
+      [name]: type === 'checkbox' ? checked :
+              name === 'max_credit_per_instance' ? parseFloat(value) : 
+              name === 'background' ? value :
+              parseInt(value, 10)
     }));
   };
 
@@ -345,6 +347,38 @@ const Instances = () => {
           placeholder="Enter background..."
           required
         />
+      </FullWidthInputGroup>
+      <FullWidthInputGroup>
+        <div style={{ 
+          display: 'flex',
+          alignItems: 'center',
+          marginTop: '8px'
+        }}>
+          <input
+            type="checkbox"
+            id="representative_agent"
+            name="representative_agent"
+            checked={instanceParams.representative_agent}
+            onChange={handleParamChange}
+            style={{ 
+              width: '16px',
+              height: '16px',
+              marginRight: '8px',
+              cursor: 'pointer'
+            }}
+          />
+          <Label 
+            htmlFor="representative_agent" 
+            style={{ 
+              margin: 0,
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: '500'
+            }}
+          >
+            Add representative agent
+          </Label>
+        </div>
       </FullWidthInputGroup>
       <CreateButton type="submit" disabled={creatingInstance}>
         {creatingInstance ? 'Creating...' : 'Create Instance'}

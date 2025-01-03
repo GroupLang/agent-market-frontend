@@ -161,7 +161,7 @@ export const fetchRepositoryIssues = (authToken, repoUrl) => async (dispatch) =>
   return attemptFetch();
 };
 
-export const addRepository = (authToken, repoUrl, defaultReward) => async (dispatch) => {
+export const addRepository = (authToken, repoUrl, defaultReward, representativeAgent = false) => async (dispatch) => {
   dispatch({ type: ADD_REPOSITORY_REQUEST });
   try {
     const url = new URL('https://api.agent.market/v1/github/repositories');
@@ -169,7 +169,8 @@ export const addRepository = (authToken, repoUrl, defaultReward) => async (dispa
     // Properly encode query parameters
     const params = new URLSearchParams({
       repo_url: repoUrl,
-      default_reward: defaultReward.toString()
+      default_reward: defaultReward.toString(),
+      representative_agent: representativeAgent.toString()
     });
 
     // Append the query string to the URL
