@@ -35,15 +35,16 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 import TimerIcon from '@mui/icons-material/Timer';
 import InfoIcon from '@mui/icons-material/Info';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ListIcon from '@mui/icons-material/List';
 import BugReportIcon from '@mui/icons-material/BugReport';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 const GitHubIntegration = () => {
   const dispatch = useDispatch();
   const [repoUrl, setRepoUrl] = useState('');
   const [defaultReward, setDefaultReward] = useState('0.0');
+  const [maxEstimationReward, setMaxEstimationReward] = useState('');
   const [representativeAgent, setRepresentativeAgent] = useState(false);
   const [expandedRepos, setExpandedRepos] = useState({});
   const [openToast, setOpenToast] = useState(false);
@@ -189,9 +190,16 @@ const GitHubIntegration = () => {
   const handleAddRepository = (e) => {
     e.preventDefault();
     if (repoUrl && defaultReward && authToken) {
-      dispatch(addRepository(authToken, repoUrl, parseFloat(defaultReward), representativeAgent));
+      dispatch(addRepository(
+        authToken, 
+        repoUrl, 
+        parseFloat(defaultReward), 
+        representativeAgent,
+        maxEstimationReward ? parseFloat(maxEstimationReward) : undefined
+      ));
       setRepoUrl('');
       setDefaultReward('0.0');
+      setMaxEstimationReward('');
       setRepresentativeAgent(false);
     }
   };
@@ -358,7 +366,7 @@ const GitHubIntegration = () => {
       }}>
         <form onSubmit={handleAddRepository}>
           <Grid container spacing={2} alignItems="flex-start">
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={5}>
               <TextField
                 fullWidth
                 label="Repository URL"
@@ -397,7 +405,7 @@ const GitHubIntegration = () => {
                 }}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={2}>
               <TextField
                 fullWidth
                 label="Default Reward"
@@ -412,6 +420,52 @@ const GitHubIntegration = () => {
                 required
                 variant="outlined"
                 size="small"
+                InputProps={{
+                  sx: {
+                    height: '32px',
+                    fontSize: '14px',
+                    backgroundColor: '#f6f8fa',
+                    borderRadius: '6px',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#d0d7de'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#a8b1ba'
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#0969da',
+                      borderWidth: '1px'
+                    }
+                  }
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                fullWidth
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    Max Estimation Reward
+                    <Tooltip 
+                      title="Optional reward limit for estimation tasks"
+                      placement="top"
+                      arrow
+                    >
+                      <HelpOutlineIcon sx={{ fontSize: 14, color: '#57606a', mb: '2px' }} />
+                    </Tooltip>
+                  </Box>
+                }
+                type="number"
+                value={maxEstimationReward}
+                onChange={(e) => setMaxEstimationReward(e.target.value)}
+                inputProps={{ 
+                  min: "0", 
+                  step: "0.01",
+                  style: { fontSize: '14px' }
+                }}
+                variant="outlined"
+                size="small"
+                placeholder="Enter amount..."
                 InputProps={{
                   sx: {
                     height: '32px',

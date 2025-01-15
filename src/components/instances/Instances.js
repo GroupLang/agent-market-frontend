@@ -31,9 +31,8 @@ import {
   styles,
 } from '../styles/InstanceStyles';
 import { fetchInstances, createInstance, fetchInvolvedProviders } from '../../redux/actions/instanceActions';
-import { Modal } from '@mui/material';
-import { Button } from '@mui/material';
-import { Upcoming } from '@mui/icons-material';
+import { Modal, Tooltip, Button } from '@mui/material';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 const Instances = () => {
   const dispatch = useDispatch();
@@ -50,6 +49,7 @@ const Instances = () => {
     model: 'gpt-3.5-turbo',
     background: '',
     max_credit_per_instance: 1,
+    max_reward_for_estimation: '',  // Optional parameter
     instance_timeout: 60,
     gen_reward_timeout: 2000,
     percentage_reward: 1,
@@ -333,6 +333,38 @@ const Instances = () => {
             placeholder="2000"
             min="1"
             required
+          />
+        </InputGroup>
+      </InputRow>
+      <InputRow>
+        <InputGroup>
+          <Label htmlFor="max_reward_for_estimation" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            Max Estimation Reward ($)
+            <Tooltip title="Optional reward limit for estimation tasks" placement="top" arrow>
+              <HelpOutlineIcon sx={{ fontSize: 16, color: '#57606a', cursor: 'help' }} />
+            </Tooltip>
+          </Label>
+          <Input
+            id="max_reward_for_estimation"
+            type="number"
+            name="max_reward_for_estimation"
+            value={instanceParams.max_reward_for_estimation}
+            onChange={handleParamChange}
+            placeholder="Enter amount..."
+            step="0.01"
+            min="0"
+            style={{
+              backgroundColor: '#f6f8fa',
+              border: '1px solid #d0d7de',
+              borderRadius: '6px',
+              '&:focus': {
+                borderColor: '#0969da',
+                boxShadow: '0 0 0 3px rgba(9, 105, 218, 0.3)'
+              },
+              '&:hover': {
+                borderColor: '#57606a'
+              }
+            }}
           />
         </InputGroup>
       </InputRow>
