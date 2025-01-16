@@ -36,6 +36,7 @@ const ChatSection = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [rewardAmount, setRewardAmount] = useState('');
   const [maxCreditPerInstance, setMaxCreditPerInstance] = useState(null);
+  const [maxRewardForEstimation, setMaxRewardForEstimation] = useState(null);
 
   const messageListRef = useRef(null);
 
@@ -74,11 +75,12 @@ const ChatSection = () => {
   };
 
   const getFirstMessage = (conversation) => {
-    if (conversation.payload && Array.isArray(conversation.payload.messages)) {
-      const firstMessage = conversation.payload.messages[0];
-      return firstMessage ? firstMessage.content : '';
+    if (!conversation || !conversation.payload || !Array.isArray(conversation.payload.messages)) {
+      console.warn('Invalid conversation payload:', conversation);
+      return '';
     }
-    return '';
+    const firstMessage = conversation.payload.messages[0];
+    return firstMessage ? firstMessage.content : '';
   };
 
   const filteredConversations = conversations.filter(conv =>
@@ -130,21 +132,26 @@ const ChatSection = () => {
   const handleRewardClick = (conversation) => {
     dispatch(setActiveConversation(conversation));
     setMaxCreditPerInstance(conversation.maxCredit);
+    setMaxRewardForEstimation(conversation.max_reward_for_estimation);
     setModalIsOpen(true);
   };
 
   const handleRewardSubmit = async () => {
     if (!activeConversation) return;
 
-    const rewardValue = parseFloat(rewardAmount);
-    if (isNaN(rewardValue) || rewardValue < 0) {
-      toast.error('Please enter a valid positive number for the reward');
-      return;
-    }
+    let rewardValue = null;
+    if (maxRewardForEstimation === null) {
+      const rewardValueParsed = parseFloat(rewardAmount);
+      if (isNaN(rewardValueParsed) || rewardValueParsed < 0) {
+        toast.error('Please enter a valid positive number for the reward');
+        return;
+      }
 
-    if (rewardValue > maxCreditPerInstance) {
-      toast.error(`Reward cannot exceed the maximum credit of ${maxCreditPerInstance}`);
-      return;
+      if (rewardValueParsed > maxCreditPerInstance) {
+        toast.error(`Reward cannot exceed the maximum credit of ${maxCreditPerInstance}`);
+        return;
+      }
+      rewardValue = rewardValueParsed;
     }
 
     try {
@@ -173,27 +180,40 @@ const ChatSection = () => {
           </div>
           <ConversationList>
             {filteredConversations.length > 0 ? (
-              filteredConversations.map(conv => (
-                <ConversationItem
-                  key={conv.id}
-                  $active={activeConversation && activeConversation.id === conv.id}
-                  onClick={() => dispatch(setActiveConversation(conv))}
-                >
-                  <ConversationTitle>{conv.id ? conv.id.slice(0, 8) + '...' : 'No ID'}</ConversationTitle>
-                  <ConversationPreview>{getFirstMessage(conv)}</ConversationPreview>
-                  <ConversationMeta>
-                    <div>{conv.creation_date ? `Created: ${format(new Date(conv.creation_date), 'MMM d, yyyy h:mm a')} UTC` : 'No date'}</div>
-                    {conv.gen_reward_timeout_datetime && (
-                      <div>
-                        {`Ends: ${format(new Date(conv.gen_reward_timeout_datetime), 'MMM d, yyyy h:mm a')} UTC`}
-                      </div>
-                    )}
-                  </ConversationMeta>
-                  <RewardButton onClick={(e) => { e.stopPropagation(); handleRewardClick(conv); }}>
-                    <FaGift /> Submit Reward
-                  </RewardButton>
-                </ConversationItem>
-              ))
+              filteredConversations.map(conv => {
+                try {
+                  console.log('Rendering conversation:', {
+                    conversation_id: conv.id,
+                    max_reward_for_estimation: conv.max_reward_for_estimation,
+                    maxCredit: conv.maxCredit,
+                    full_conversation: conv
+                  });
+                  return (
+                    <ConversationItem
+                      key={conv.id}
+                      $active={activeConversation && activeConversation.id === conv.id}
+                      onClick={() => dispatch(setActiveConversation(conv))}
+                    >
+                      <ConversationTitle>{conv.id ? conv.id.slice(0, 8) + '...' : 'No ID'}</ConversationTitle>
+                      <ConversationPreview>{getFirstMessage(conv)}</ConversationPreview>
+                      <ConversationMeta>
+                        <div>{conv.creation_date ? `Created: ${format(new Date(conv.creation_date), 'MMM d, yyyy h:mm a')} UTC` : 'No date'}</div>
+                        {conv.gen_reward_timeout_datetime && (
+                          <div>
+                            {`Ends: ${format(new Date(conv.gen_reward_timeout_datetime), 'MMM d, yyyy h:mm a')} UTC`}
+                          </div>
+                        )}
+                      </ConversationMeta>
+                      <RewardButton onClick={(e) => { e.stopPropagation(); handleRewardClick(conv); }}>
+                        <FaGift /> {conv.max_reward_for_estimation !== null ? 'Estimate Reward' : 'Submit Reward'}
+                      </RewardButton>
+                    </ConversationItem>
+                  );
+                } catch (error) {
+                  console.error('Error rendering conversation:', error);
+                  return null;
+                }
+              })
             ) : (
               <div style={{ padding: '15px', textAlign: 'center' }}>
                 {searchTerm ? 'No matching conversations' : 'No conversations available'}
@@ -257,22 +277,33 @@ const ChatSection = () => {
         }}
       >
         <ModalCloseIcon onClick={() => setModalIsOpen(false)} />
-        <ModalTitle>Submit Reward</ModalTitle>
-        <ModalInput
-          type="number"
-          min="0"
-          max={maxCreditPerInstance}
-          step="0.01"
-          value={rewardAmount}
-          onChange={(e) => setRewardAmount(e.target.value)}
-          placeholder="Enter reward amount"
-        />
-        <ModalButton 
-          onClick={handleRewardSubmit} 
-          disabled={!rewardAmount}
-          style={{ marginTop: '20px' }} // Add margin to the top of the button
+        <ModalTitle>{maxRewardForEstimation !== null ? 'Estimate Reward' : 'Submit Reward'}</ModalTitle>
+        {maxRewardForEstimation === null ? (
+          <>
+            <ModalInput
+              type="number"
+              min="0"
+              max={maxCreditPerInstance}
+              step="0.01"
+              value={rewardAmount}
+              onChange={(e) => setRewardAmount(e.target.value)}
+              placeholder="Enter reward amount"
+            />
+            <ModalText>
+              Enter the amount you'd like to reward.
+            </ModalText>
+          </>
+        ) : (
+          <ModalText>
+            Click confirm to estimate the reward based on your interaction.
+          </ModalText>
+        )}
+        <ModalButton
+          onClick={handleRewardSubmit}
+          disabled={maxRewardForEstimation === null && (rewardAmount === '' || parseFloat(rewardAmount) < 0)}
+          style={{ marginTop: '20px' }}
         >
-          Confirm Reward
+          {maxRewardForEstimation !== null ? 'Estimate' : 'Confirm Reward'}
         </ModalButton>
       </Modal>
     </>

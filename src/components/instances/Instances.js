@@ -82,7 +82,7 @@ const Instances = () => {
     setInstanceParams(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked :
-              name === 'max_credit_per_instance' ? parseFloat(value) : 
+              (name === 'max_credit_per_instance' || name === 'max_reward_for_estimation') ? parseFloat(value) : 
               name === 'background' ? value :
               parseInt(value, 10)
     }));

@@ -19,17 +19,32 @@ export const fetchConversations = (authToken) => async (dispatch) => {
     const response = await fetch(`https://api.agent.market/v1/instances/for-current-user?instance_status=3`, {
       headers: { 'Authorization': `Bearer ${authToken}` }
     });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API response error text:', errorText); // Log the error response text
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
+    data.forEach(instance => {
+      console.log('Instance data:', {
+        id: instance.id,
+        max_reward_for_estimation: instance.max_reward_for_estimation,
+        max_credit_per_instance: instance.max_credit_per_instance,
+        full_instance: instance
+      });
+    });
     const formattedConversations = data.map(conv => ({
       id: conv.id,
       creation_date: conv.creation_date,
       gen_reward_timeout_datetime: conv.gen_reward_timeout_datetime,
       payload: conv.payload || {},
       maxCredit: conv.max_credit_per_instance || 0,
+      max_reward_for_estimation: conv.max_reward_for_estimation !== undefined ? conv.max_reward_for_estimation : null,
     }));
+    console.log('Formatted conversations:', formattedConversations); // Print the formatted conversations
     dispatch({ type: FETCH_CONVERSATIONS_SUCCESS, payload: formattedConversations });
   } catch (error) {
+    console.error('Error fetching conversations:', error); // Log any errors encountered
     dispatch({ type: FETCH_CONVERSATIONS_FAILURE, payload: error.message });
   }
 };
@@ -99,15 +114,14 @@ export const setActiveConversation = (conversation) => ({
 export const submitReward = (authToken, conversationId, rewardValue) => async (dispatch) => {
   dispatch({ type: SUBMIT_REWARD_REQUEST });
   try {
+    const bodyData = rewardValue !== null ? { gen_reward: rewardValue } : {};
     const response = await fetch(`https://api.agent.market/v1/instances/${conversationId}/report-reward`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        gen_reward: rewardValue
-      }),
+      body: JSON.stringify(bodyData),
     });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
