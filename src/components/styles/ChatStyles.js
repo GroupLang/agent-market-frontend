@@ -112,31 +112,42 @@ export const MessageList = styled.div`
 `;
 
 export const MessageBubble = styled.div`
-  max-width: 70%;
-  padding: 10px 15px;
-  border-radius: 18px;
-  margin-bottom: 10px;
+  margin: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  max-width: 80%;
   position: relative;
+  word-wrap: break-word;
+  
   ${props => props.$isUser ? `
-    align-self: flex-end;
     background-color: #007bff;
     color: white;
     margin-left: auto;
+    border-bottom-right-radius: 4px;
+  ` : props.$isSystem ? `
+    background-color: #f8f9fa;
+    color: #666;
+    margin: 10px auto;
+    text-align: center;
+    font-style: italic;
   ` : `
-    align-self: flex-start;
-    background-color: #f1f3f5;
-    color: #495057;
-  `}
-  ${props => props.$isSystem && `
-    align-self: center;
-    background-color: #ffc107;
+    background-color: #e9ecef;
     color: #212529;
+    margin-right: auto;
+    border-bottom-left-radius: 4px;
   `}
 
-  @media (max-width: 768px) {
-    max-width: 85%;
-    padding: 8px 12px;
-    font-size: 14px;
+  pre {
+    background-color: ${props => props.$isUser ? '#0056b3' : '#dee2e6'};
+    border-radius: 4px;
+    padding: 8px;
+    margin: 8px 0;
+    overflow-x: auto;
+  }
+
+  code {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9em;
   }
 `;
 
@@ -189,20 +200,20 @@ export const SendButton = styled.button`
 
 export const CopyIcon = styled(FaCopy)`
   position: absolute;
-  bottom: 5px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
   cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.2s ease;
-  font-size: 0.9em;
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: ${props => props.$isUser ? 'rgba(255, 255, 255, 0.7)' : '#6c757d'};
 
-  &:hover {
+  ${MessageBubble}:hover & {
     opacity: 1;
   }
 
-  ${props => props.$isUser && `
-    color: white;
-  `}
+  &:hover {
+    color: ${props => props.$isUser ? '#fff' : '#343a40'};
+  }
 `;
 
 export const RewardButton = styled.button`
@@ -336,31 +347,60 @@ export const styles = {
   }
 };
 
-export const MessageContent = styled(ReactMarkdown)`
-  // Add any specific styles for the markdown content here
+export const MessageContent = styled.div`
+  p {
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  ul, ol {
+    margin: 8px 0;
+    padding-left: 20px;
+  }
+
+  a {
+    color: ${props => props.$isUser ? '#fff' : '#007bff'};
+    text-decoration: underline;
+  }
+
+  img {
+    max-width: 100%;
+    border-radius: 4px;
+    margin: 8px 0;
+  }
 `;
 
 export const CodeBlock = styled.div`
-  background-color: #f8f8f8;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  padding: 10px;
-  margin: 10px 0;
   position: relative;
-  overflow-x: auto;
+  margin: 8px 0;
+
+  pre {
+    margin: 0;
+    padding: 8px;
+  }
 `;
 
 export const CopyButton = styled.button`
   position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  padding: 2px 5px;
-  font-size: 12px;
+  top: 4px;
+  right: 4px;
+  background: transparent;
+  border: none;
+  color: #6c757d;
   cursor: pointer;
+  padding: 4px 8px;
   display: flex;
   align-items: center;
   gap: 4px;
+  font-size: 0.8em;
+  opacity: 0;
+  transition: opacity 0.2s;
+
+  ${CodeBlock}:hover & {
+    opacity: 1;
+  }
+
+  &:hover {
+    color: #343a40;
+  }
 `;
