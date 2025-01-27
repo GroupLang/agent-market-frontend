@@ -199,11 +199,29 @@ const ChatSection = () => {
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    padding: '10px 15px'
+                    padding: '10px 15px',
+                    justifyContent: 'space-between'
                   }}
                 >
-                  {expandedInstances[instance.id] ? <FaChevronDown /> : <FaChevronRight />}
-                  <span style={{ marginLeft: '10px' }}>Instance: {instance.id.slice(0, 8)}...</span>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    {expandedInstances[instance.id] ? <FaChevronDown /> : <FaChevronRight />}
+                    <span style={{ marginLeft: '10px' }}>Instance: {instance.id.slice(0, 8)}...</span>
+                  </div>
+                  {instance.gen_reward_timeout_datetime && (
+                    <RewardButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRewardClick({
+                          id: instance.id,
+                          maxCredit: instance.max_credit_per_instance || 0,
+                          max_reward_for_estimation: instance.max_reward_for_estimation
+                        });
+                      }}
+                      style={{ marginLeft: '10px' }}
+                    >
+                      <FaGift /> Submit Reward
+                    </RewardButton>
+                  )}
                 </ConversationItem>
                 {expandedInstances[instance.id] && instance.conversations && (
                   <div style={{ marginLeft: '20px' }}>
@@ -219,16 +237,6 @@ const ChatSection = () => {
                         <ConversationPreview>{getFirstMessage(conv)}</ConversationPreview>
                         <ConversationMeta>
                           <div>{conv.creation_date ? `Created: ${format(new Date(conv.creation_date), 'MMM d, yyyy h:mm a')} UTC` : 'No date'}</div>
-                          {conv.gen_reward_timeout_datetime && (
-                            <div>
-                              <RewardButton onClick={(e) => {
-                                e.stopPropagation();
-                                handleRewardClick(conv);
-                              }}>
-                                <FaGift /> Submit Reward
-                              </RewardButton>
-                            </div>
-                          )}
                         </ConversationMeta>
                       </ConversationItem>
                     ))}
