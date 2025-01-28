@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { format } from 'date-fns';
-import { FaSearch, FaPaperPlane, FaCopy, FaGift, FaTimes } from 'react-icons/fa';
+import { FaSearch, FaPaperPlane, FaCopy, FaGift, FaTimes, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
+import ReactMarkdown from 'react-markdown';
 import {
   ChatContainer, Sidebar, ConversationList, ConversationItem, ConversationTitle,
   ConversationPreview, ConversationMeta, MainContent, MessageList, MessageBubble,
@@ -22,6 +23,7 @@ import { ModalText } from '../styles/ChatStyles';
 const ChatSection = () => {
   const dispatch = useDispatch();
   const {
+    instances,
     conversations,
     messages,
     activeConversation,
@@ -37,6 +39,7 @@ const ChatSection = () => {
   const [rewardAmount, setRewardAmount] = useState('');
   const [maxCreditPerInstance, setMaxCreditPerInstance] = useState(null);
   const [maxRewardForEstimation, setMaxRewardForEstimation] = useState(null);
+  const [expandedInstances, setExpandedInstances] = useState({});
 
   const messageListRef = useRef(null);
 
@@ -54,7 +57,7 @@ const ChatSection = () => {
 
   useEffect(() => {
     if (activeConversation) {
-      dispatch(fetchMessages(authToken, activeConversation.id));
+      dispatch(fetchMessages(authToken, activeConversation.id, activeConversation.providerId));
     }
   }, [dispatch, authToken, activeConversation]);
 
@@ -70,7 +73,7 @@ const ChatSection = () => {
       return;
     }
 
-    dispatch(sendMessage(authToken, activeConversation.id, inputMessage));
+    dispatch(sendMessage(authToken, activeConversation.id, activeConversation.providerId, inputMessage));
     setInputMessage('');
   };
 
@@ -83,11 +86,19 @@ const ChatSection = () => {
     return firstMessage ? firstMessage.content : '';
   };
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    getFirstMessage(conv).toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const toggleInstanceExpand = (instanceId) => {
+    setExpandedInstances(prev => ({
+      ...prev,
+      [instanceId]: !prev[instanceId]
+    }));
+  };
 
+  const filteredInstances = instances.filter(instance =>
+    instance.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (instance.conversations && instance.conversations.some(conv => 
+      getFirstMessage(conv).toLowerCase().includes(searchTerm.toLowerCase())
+    ))
+  );
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -105,28 +116,6 @@ const ChatSection = () => {
       console.error('Failed to copy message: ', err);
       toast.error('Failed to copy message');
     });
-  };
-
-  const renderers = {
-    code: ({node, inline, className, children, ...props}) => {
-      const match = /language-(\w+)/.exec(className || '');
-      return !inline && match ? (
-        <CodeBlock>
-          <CopyButton onClick={() => copyToClipboard(String(children))}>
-            <FaCopy /> Copy
-          </CopyButton>
-          <pre>
-            <code className={className} {...props}>
-              {children}
-            </code>
-          </pre>
-        </CodeBlock>
-      ) : (
-        <code className={className} {...props}>
-          {children}
-        </code>
-      );
-    }
   };
 
   const handleRewardClick = (conversation) => {
@@ -166,11 +155,33 @@ const ChatSection = () => {
     }
   };
 
+  const renderers = {
+    code: ({node, inline, className, children, ...props}) => {
+      const match = /language-(\w+)/.exec(className || '');
+      return !inline && match ? (
+        <CodeBlock>
+          <CopyButton onClick={() => copyToClipboard(String(children))}>
+            <FaCopy /> Copy
+          </CopyButton>
+          <pre>
+            <code className={className} {...props}>
+              {children}
+            </code>
+          </pre>
+        </CodeBlock>
+      ) : (
+        <code className={className} {...props}>
+          {children}
+        </code>
+      );
+    }
+  };
+
   return (
     <>
       <ChatContainer>
         <Sidebar>
-          <div style={{ padding: '15px' }}>
+          <div style={{ padding: '10px' }}>
             <Input
               type="text"
               placeholder="Search conversations..."
@@ -179,46 +190,60 @@ const ChatSection = () => {
             />
           </div>
           <ConversationList>
-            {filteredConversations.length > 0 ? (
-              filteredConversations.map(conv => {
-                try {
-                  console.log('Rendering conversation:', {
-                    conversation_id: conv.id,
-                    max_reward_for_estimation: conv.max_reward_for_estimation,
-                    maxCredit: conv.maxCredit,
-                    full_conversation: conv
-                  });
-                  return (
-                    <ConversationItem
-                      key={conv.id}
-                      $active={activeConversation && activeConversation.id === conv.id}
-                      onClick={() => dispatch(setActiveConversation(conv))}
+            {filteredInstances.map(instance => (
+              <div key={instance.id}>
+                <ConversationItem 
+                  onClick={() => toggleInstanceExpand(instance.id)}
+                  style={{ 
+                    backgroundColor: '#f8f9fa',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '10px 15px',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    {expandedInstances[instance.id] ? <FaChevronDown /> : <FaChevronRight />}
+                    <span style={{ marginLeft: '10px' }}>Instance: {instance.id.slice(0, 8)}...</span>
+                  </div>
+                  {instance.gen_reward_timeout_datetime && (
+                    <RewardButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRewardClick({
+                          id: instance.id,
+                          maxCredit: instance.max_credit_per_instance || 0,
+                          max_reward_for_estimation: instance.max_reward_for_estimation
+                        });
+                      }}
+                      style={{ marginLeft: '10px' }}
                     >
-                      <ConversationTitle>{conv.id ? conv.id.slice(0, 8) + '...' : 'No ID'}</ConversationTitle>
-                      <ConversationPreview>{getFirstMessage(conv)}</ConversationPreview>
-                      <ConversationMeta>
-                        <div>{conv.creation_date ? `Created: ${format(new Date(conv.creation_date), 'MMM d, yyyy h:mm a')} UTC` : 'No date'}</div>
-                        {conv.gen_reward_timeout_datetime && (
-                          <div>
-                            {`Ends: ${format(new Date(conv.gen_reward_timeout_datetime), 'MMM d, yyyy h:mm a')} UTC`}
-                          </div>
-                        )}
-                      </ConversationMeta>
-                      <RewardButton onClick={(e) => { e.stopPropagation(); handleRewardClick(conv); }}>
-                        <FaGift /> {conv.max_reward_for_estimation !== null ? 'Estimate Reward' : 'Submit Reward'}
-                      </RewardButton>
-                    </ConversationItem>
-                  );
-                } catch (error) {
-                  console.error('Error rendering conversation:', error);
-                  return null;
-                }
-              })
-            ) : (
-              <div style={{ padding: '15px', textAlign: 'center' }}>
-                {searchTerm ? 'No matching conversations' : 'No conversations available'}
+                      <FaGift /> Submit Reward
+                    </RewardButton>
+                  )}
+                </ConversationItem>
+                {expandedInstances[instance.id] && instance.conversations && (
+                  <div style={{ marginLeft: '20px' }}>
+                    {instance.conversations.map(conv => (
+                      <ConversationItem
+                        key={`${conv.id}-${conv.providerId}`}
+                        $active={activeConversation && 
+                                activeConversation.id === conv.id && 
+                                activeConversation.providerId === conv.providerId}
+                        onClick={() => dispatch(setActiveConversation(conv))}
+                      >
+                        <ConversationTitle>Provider: {conv.providerId.slice(0, 8)}...</ConversationTitle>
+                        <ConversationPreview>{getFirstMessage(conv)}</ConversationPreview>
+                        <ConversationMeta>
+                          <div>{conv.creation_date ? `Created: ${format(new Date(conv.creation_date), 'MMM d, yyyy h:mm a')} UTC` : 'No date'}</div>
+                        </ConversationMeta>
+                      </ConversationItem>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </ConversationList>
         </Sidebar>
         <MainContent>
@@ -232,11 +257,16 @@ const ChatSection = () => {
                   $isUser={msg.sender === 'requester'}
                   $isSystem={msg.sender !== 'requester' && msg.sender !== 'provider'}
                 >
-                  <MessageContent components={renderers}>{msg.message}</MessageContent>
+                  <MessageContent>
+                    <ReactMarkdown components={renderers}>{msg.message}</ReactMarkdown>
+                  </MessageContent>
                   <CopyIcon 
                     onClick={() => copyMessageToClipboard(msg.message)}
                     $isUser={msg.sender === 'requester'}
                   />
+                  <div style={{ fontSize: '0.8em', color: '#666', marginTop: '5px' }}>
+                    {format(new Date(msg.timestamp), 'MMM d, yyyy h:mm a')} UTC
+                  </div>
                 </MessageBubble>
               ))
             )}
@@ -246,65 +276,68 @@ const ChatSection = () => {
               </MessageBubble>
             )}
           </MessageList>
-          {!modalIsOpen && (
-            <InputArea>
-              <Input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Type a message..."
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              />
-              <SendButton onClick={handleSendMessage}>
-                <FaPaperPlane />
-              </SendButton>
-            </InputArea>
-          )}
+          <InputArea>
+            <Input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              placeholder="Type your message..."
+              disabled={!activeConversation}
+            />
+            <SendButton onClick={handleSendMessage} disabled={!activeConversation}>
+              <FaPaperPlane />
+            </SendButton>
+          </InputArea>
         </MainContent>
       </ChatContainer>
+
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={() => setModalIsOpen(false)}
         style={{
           content: {
-            ...styles.modalContent,
-            padding: '50px', // Add padding to the modal content
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'stretch',
-          },
-          overlay: styles.modalOverlay
+            top: '50%',
+            left: '50%',
+            right: 'auto',
+            bottom: 'auto',
+            marginRight: '-50%',
+            transform: 'translate(-50%, -50%)',
+            padding: '20px',
+            maxWidth: '500px',
+            width: '90%'
+          }
         }}
       >
-        <ModalCloseIcon onClick={() => setModalIsOpen(false)} />
-        <ModalTitle>{maxRewardForEstimation !== null ? 'Estimate Reward' : 'Submit Reward'}</ModalTitle>
-        {maxRewardForEstimation === null ? (
-          <>
-            <ModalInput
-              type="number"
-              min="0"
-              max={maxCreditPerInstance}
-              step="0.01"
-              value={rewardAmount}
-              onChange={(e) => setRewardAmount(e.target.value)}
-              placeholder="Enter reward amount"
-            />
+        <ModalContent>
+          <ModalCloseIcon onClick={() => setModalIsOpen(false)}>
+            <FaTimes />
+          </ModalCloseIcon>
+          <ModalTitle>Submit Reward</ModalTitle>
+          {maxRewardForEstimation === null ? (
+            <>
+              <ModalText>
+                Enter the reward amount (max: ${maxCreditPerInstance})
+              </ModalText>
+              <ModalInput
+                type="number"
+                step="0.01"
+                min="0"
+                max={maxCreditPerInstance}
+                value={rewardAmount}
+                onChange={(e) => setRewardAmount(e.target.value)}
+                placeholder="Enter reward amount"
+              />
+            </>
+          ) : (
             <ModalText>
-              Enter the amount you'd like to reward.
+              This will submit the pre-configured reward of ${maxRewardForEstimation}
             </ModalText>
-          </>
-        ) : (
-          <ModalText>
-            Click confirm to estimate the reward based on your interaction.
-          </ModalText>
-        )}
-        <ModalButton
-          onClick={handleRewardSubmit}
-          disabled={maxRewardForEstimation === null && (rewardAmount === '' || parseFloat(rewardAmount) < 0)}
-          style={{ marginTop: '20px' }}
-        >
-          {maxRewardForEstimation !== null ? 'Estimate' : 'Confirm Reward'}
-        </ModalButton>
+          )}
+          <ModalButton onClick={handleRewardSubmit}>
+            Submit Reward
+          </ModalButton>
+        </ModalContent>
       </Modal>
     </>
   );

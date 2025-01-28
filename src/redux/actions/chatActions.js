@@ -12,6 +12,25 @@ export const SUBMIT_REWARD_REQUEST = 'SUBMIT_REWARD_REQUEST';
 export const SUBMIT_REWARD_SUCCESS = 'SUBMIT_REWARD_SUCCESS';
 export const SUBMIT_REWARD_FAILURE = 'SUBMIT_REWARD_FAILURE';
 export const ADD_MESSAGE = 'ADD_MESSAGE';
+export const FETCH_WINNING_PROVIDERS_REQUEST = 'FETCH_WINNING_PROVIDERS_REQUEST';
+export const FETCH_WINNING_PROVIDERS_SUCCESS = 'FETCH_WINNING_PROVIDERS_SUCCESS';
+export const FETCH_WINNING_PROVIDERS_FAILURE = 'FETCH_WINNING_PROVIDERS_FAILURE';
+
+export const fetchWinningProviders = (authToken, instanceId) => async (dispatch) => {
+  dispatch({ type: FETCH_WINNING_PROVIDERS_REQUEST });
+  try {
+    const response = await fetch(`https://api.agent.market/v1/instances/${instanceId}/winning-providers`, {
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const providers = await response.json();
+    dispatch({ type: FETCH_WINNING_PROVIDERS_SUCCESS, payload: { instanceId, providers } });
+    return providers;
+  } catch (error) {
+    dispatch({ type: FETCH_WINNING_PROVIDERS_FAILURE, payload: error.message });
+    throw error;
+  }
+};
 
 export const fetchConversations = (authToken) => async (dispatch) => {
   dispatch({ type: FETCH_CONVERSATIONS_REQUEST });
@@ -21,51 +40,56 @@ export const fetchConversations = (authToken) => async (dispatch) => {
     });
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('API response error text:', errorText); // Log the error response text
+      console.error('API response error text:', errorText);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data = await response.json();
-    data.forEach(instance => {
-      console.log('Instance data:', {
-        id: instance.id,
-        max_reward_for_estimation: instance.max_reward_for_estimation,
-        max_credit_per_instance: instance.max_credit_per_instance,
-        full_instance: instance
-      });
-    });
-    const formattedConversations = data.map(conv => ({
-      id: conv.id,
-      creation_date: conv.creation_date,
-      gen_reward_timeout_datetime: conv.gen_reward_timeout_datetime,
-      payload: conv.payload || {},
-      maxCredit: conv.max_credit_per_instance || 0,
-      max_reward_for_estimation: conv.max_reward_for_estimation !== undefined ? conv.max_reward_for_estimation : null,
+    const instances = await response.json();
+    
+    // Fetch winning providers for each instance
+    const instancesWithProviders = await Promise.all(instances.map(async (instance) => {
+      try {
+        const providers = await dispatch(fetchWinningProviders(authToken, instance.id));
+        return {
+          ...instance,
+          providers,
+          conversations: providers.map(provider => ({
+            id: instance.id,
+            providerId: provider,
+            creation_date: instance.creation_date,
+            gen_reward_timeout_datetime: instance.gen_reward_timeout_datetime,
+            payload: instance.payload || {},
+            maxCredit: instance.max_credit_per_instance || 0,
+            max_reward_for_estimation: instance.max_reward_for_estimation !== undefined ? instance.max_reward_for_estimation : null,
+          }))
+        };
+      } catch (error) {
+        console.error(`Failed to fetch providers for instance ${instance.id}:`, error);
+        return instance;
+      }
     }));
-    console.log('Formatted conversations:', formattedConversations); // Print the formatted conversations
-    dispatch({ type: FETCH_CONVERSATIONS_SUCCESS, payload: formattedConversations });
+
+    dispatch({ type: FETCH_CONVERSATIONS_SUCCESS, payload: instancesWithProviders });
   } catch (error) {
-    console.error('Error fetching conversations:', error); // Log any errors encountered
+    console.error('Error fetching conversations:', error);
     dispatch({ type: FETCH_CONVERSATIONS_FAILURE, payload: error.message });
   }
 };
 
-export const fetchMessages = (authToken, conversationId) => async (dispatch) => {
+export const fetchMessages = (authToken, conversationId, providerId) => async (dispatch) => {
   dispatch({ type: FETCH_MESSAGES_REQUEST });
   try {
-    const response = await fetch(`https://api.agent.market/v1/chat/${conversationId}`, {
+    const response = await fetch(`https://api.agent.market/v1/chat/${conversationId}?provider_id=${providerId}`, {
       headers: { 'Authorization': `Bearer ${authToken}` }
     });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const messages = await response.json();
-    
-    // Directly use the messages array returned by the API
     dispatch({ type: FETCH_MESSAGES_SUCCESS, payload: messages });
   } catch (error) {
     dispatch({ type: FETCH_MESSAGES_FAILURE, payload: error.message });
   }
 };
 
-export const sendMessage = (authToken, conversationId, message) => async (dispatch) => {
+export const sendMessage = (authToken, conversationId, providerId, message) => async (dispatch) => {
   dispatch({ type: SEND_MESSAGE_REQUEST });
   dispatch(addMessage({ 
     sender: 'requester', 
@@ -82,6 +106,7 @@ export const sendMessage = (authToken, conversationId, message) => async (dispat
       },
       body: JSON.stringify({
         message: message,
+        provider_id: providerId
       }),
     });
 
@@ -90,8 +115,7 @@ export const sendMessage = (authToken, conversationId, message) => async (dispat
 
     if (data.status === 'ok') {
       dispatch({ type: SEND_MESSAGE_SUCCESS });
-      // Fetch the updated conversation to get the provider's response
-      dispatch(fetchMessages(authToken, conversationId));
+      dispatch(fetchMessages(authToken, conversationId, providerId));
     } else {
       throw new Error('Unexpected response from the API');
     }
