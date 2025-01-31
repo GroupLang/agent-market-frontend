@@ -1,7 +1,29 @@
+import React, { useState } from 'react';
 import { StyledTable, StyledTableRow, styles } from '../styles/DashboardStyles';
-import { FaSearch, FaSort, FaToggleOn, FaToggleOff, FaTrash, FaChevronLeft, FaChevronRight, FaKey } from 'react-icons/fa';
+import { FaSearch, FaSort, FaToggleOn, FaToggleOff, FaTrash, FaChevronLeft, FaChevronRight, FaKey, FaCheck } from 'react-icons/fa';
 
-const ApiKeySection = ({ 
+const CustomCheckbox = ({ checked, onChange, label, disabled }) => (
+  <label style={styles.checkboxContainer}>
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={onChange}
+      disabled={disabled}
+      style={styles.hiddenCheckbox}
+    />
+    <div
+      style={{
+        ...styles.styledCheckbox,
+        ...(checked ? styles.styledCheckboxChecked : {}),
+      }}
+    >
+      {checked && <FaCheck size={12} />}
+    </div>
+    <span>{label}</span>
+  </label>
+);
+
+const ApiKeySection = ({
   searchTerm, 
   setSearchTerm, 
   newKeyName, 
@@ -44,15 +66,12 @@ const ApiKeySection = ({
           style={styles.input}
           disabled={isCreatingKey}
         />
-        <label style={styles.checkboxLabel}>
-          <input
-            type="checkbox"
-            checked={isLive}
-            onChange={(e) => setIsLive(e.target.checked)}
-            disabled={isCreatingKey}
-          />
-          Is Live
-        </label>
+        <CustomCheckbox
+          checked={isLive}
+          onChange={(e) => setIsLive(e.target.checked)}
+          label="Is Live"
+          disabled={isCreatingKey}
+        />
         <button 
           onClick={handleCreateApiKey} 
           style={styles.createBtn}

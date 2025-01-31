@@ -4,6 +4,8 @@ import {
   LOGIN_SUCCESS,
   LOGIN_FAIL,
   LOGOUT,
+  SET_GITHUB_USERNAME_SUCCESS,
+  SET_GITHUB_USERNAME_FAIL,
 } from '../actions/authActions';
 
 const initialState = {
@@ -44,6 +46,20 @@ const authReducer = (state = initialState, action) => {
         ...initialState,
         isAuthenticated: false,
         token: null,
+      };
+    case SET_GITHUB_USERNAME_SUCCESS:
+      return {
+        ...state,
+        user: {
+          ...state.user,
+          github_username: action.payload.github_username,
+        },
+        error: null,
+      };
+    case SET_GITHUB_USERNAME_FAIL:
+      return {
+        ...state,
+        error: action.payload,
       };
     default:
       return state;

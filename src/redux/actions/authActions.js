@@ -9,6 +9,8 @@ export const FETCH_USER_DATA_SUCCESS = 'FETCH_USER_DATA_SUCCESS';
 export const FETCH_USER_DATA_FAIL = 'FETCH_USER_DATA_FAIL';
 export const REFRESH_TOKEN_SUCCESS = 'REFRESH_TOKEN_SUCCESS';
 export const REFRESH_TOKEN_FAIL = 'REFRESH_TOKEN_FAIL';
+export const SET_GITHUB_USERNAME_SUCCESS = 'SET_GITHUB_USERNAME_SUCCESS';
+export const SET_GITHUB_USERNAME_FAIL = 'SET_GITHUB_USERNAME_FAIL';
 
 const API_URL = 'https://api.agent.market/v1/auth';
 
@@ -23,6 +25,33 @@ export const register = (email, username, fullname, password) => async (dispatch
     dispatch({ type: REGISTER_SUCCESS, payload: response.data });
   } catch (error) {
     dispatch({ type: REGISTER_FAIL, payload: error.response.data });
+  }
+};
+
+export const setGithubUsername = (github_username) => async (dispatch, getState) => {
+  try {
+    const { auth: { token } } = getState();
+    if (!token) {
+      throw new Error('No auth token found');
+    }
+    const response = await fetch(`${API_URL}/set-github-username?github_username=${encodeURIComponent(github_username)}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.detail || 'Failed to set GitHub username');
+    }
+    const data = await response.json();
+    dispatch({ type: SET_GITHUB_USERNAME_SUCCESS, payload: data });
+  } catch (error) {
+    console.error('Error setting GitHub username:', error);
+    dispatch({ type: SET_GITHUB_USERNAME_FAIL, payload: error.message });
+    throw error;
   }
 };
 

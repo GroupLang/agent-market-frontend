@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 
+// First declare all styled components
 export const DashboardContainer = styled.div`
   font-family: 'Inter', sans-serif;
   background-color: #f7f9fc;
@@ -151,6 +152,7 @@ export const StyledTableRow = styled.tr`
   }
 `;
 
+// Then export the single styles object
 export const styles = {
   container: {
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
@@ -164,6 +166,36 @@ export const styles = {
     '@media (max-width: 768px)': {
       padding: '0 0.5em',
     },
+  },
+  checkboxContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+    gap: '0.5em',
+    userSelect: 'none'
+  },
+  hiddenCheckbox: {
+    position: 'absolute',
+    opacity: 0,
+    cursor: 'pointer',
+    height: 0,
+    width: 0
+  },
+  styledCheckbox: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '20px',
+    height: '20px',
+    backgroundColor: '#fff',
+    border: '1px solid #ced4da',
+    borderRadius: '4px',
+    transition: 'all 150ms'
+  },
+  styledCheckboxChecked: {
+    backgroundColor: '#2da44e',
+    borderColor: '#2da44e',
+    color: '#ffffff'
   },
   nav: {
     display: 'flex',
@@ -379,7 +411,22 @@ export const styles = {
     gap: '0.5em',
   },
   createBtn: {
-    padding: '0.5em 1em',
+    padding: '0.5em 1.5em',
+    transition: 'background-color 0.3s, transform 0.1s, box-shadow 0.2s',
+    '&:hover': {
+      backgroundColor: '#218838',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+      transform: 'translateY(-2px)',
+    },
+    '&:active': {
+      transform: 'translateY(0)',
+      boxShadow: 'none',
+    },
+    '&:disabled': {
+      backgroundColor: '#94d3a2',
+      cursor: 'not-allowed',
+      boxShadow: 'none',
+    },
     backgroundColor: '#2da44e',
     color: '#ffffff',
     border: 'none',
@@ -937,7 +984,6 @@ export const styles = {
       flexDirection: 'column',
     },
     // Add any other responsive styles here
-  },
+  }
 };
 
-export default styles;
